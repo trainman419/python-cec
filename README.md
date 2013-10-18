@@ -2,6 +2,8 @@
 
 ## Proposed API
 
+(see cec.cpp for updated proposed API)
+
 ```
 class cec_configuration:
    ALL THE THINGS :(
