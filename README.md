@@ -2,34 +2,40 @@
 
 ## Proposed API
 
-(see cec.cpp for updated proposed API)
 
 ```
-class cec_configuration:
-   ALL THE THINGS :(
+import cec
 
-class ICEAdapter:
-   def open(str port, int timeout_ms=10000)
-      throws error on failure
+adapters = cec.list_adapters()
 
-   def close()
-      
-   def ping()
-      returns bool
+cec.open( adapter = cec.DEFAULT )
 
-   def transmit(cec_command data)
-      throws error on failure
+cec.close()
 
-   def powerOnDevices(cec_logical_address address = CecTV)
-      throws error on failure
+cec.add_callback( event, handler )
 
-   def standByDevices(cec_logical_address address = CecBroadcast)
-      throws error on failure
+cec.remove_callback( event, handler )
 
-   def setActiveSource(cec_device_type type = CecDeviceTypeReserved)
-      throws error on failure
+devices = cec.list_devices()
 
-   def getDevicePowerStatus(cec_logical_address address)
-      throws error on device not found
-      returns cec_power_status
+class Device:
+   on()
+   standby()
+   address
+   vendor
+   osd_string
+   cec_version
+   power_status
+   language
+   name?
+   #TODO: get volume
+   #TODO: get active input
+
+cec.set_active_source()
+cec.set_inactive_source()
+
+cec.volume_up()
+cec.volume_down()
+
+# TODO: set physical address
 ```
