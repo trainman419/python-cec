@@ -159,8 +159,28 @@ static PyObject * list_adapters(PyObject * self, PyObject * args) {
 static PyObject * open(PyObject * self, PyObject * args) {
    PyObject * result = NULL;
    const char * dev;
-  
-   if( PyArg_ParseTuple(args, "s:open", &dev) ) {
+
+   // this is NOT the right way to parse optional args in C...
+   //  it doesn't produce good error messages; sometimes reports 0 args, other
+   //  time 1 required
+   // HOWEVER, it works.     Bitches.
+   if( PyArg_ParseTuple(args, ":open") ) {
+      std::list<cec_adapter_descriptor> devs = get_adapters();
+      if( devs.size() > 0 ) {
+         dev = devs.front().strComName;
+         if( CEC_adapter->Open(dev) ) {
+            Py_INCREF(Py_None);
+            result = Py_None;
+         } else {
+            char errstr[1024];
+            snprintf(errstr, 1024, "Failed to open %s: %s", dev, 
+                     strerror(errno));
+            PyErr_SetString(PyExc_IOError, errstr);
+         }
+      } else {
+         PyErr_SetString(PyExc_Exception, "No default adapter found");
+      }
+   } else if( PyArg_ParseTuple(args, "s:open", &dev) ) {
       if( CEC_adapter->Open(dev) ) {
          Py_INCREF(Py_None);
          result = Py_None;
