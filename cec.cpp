@@ -114,28 +114,64 @@ std::list<cec_adapter_descriptor> get_adapters() {
       dev_list = (cec_adapter_descriptor*)realloc(dev_list, 
          cec_count * sizeof(cec_adapter_descriptor));
       count = CEC_adapter->DetectAdapters(dev_list, cec_count);
-      //if( 
+      count = std::min(count, cec_count);
    }
 
-   //for( int i=0; i<
+   std::list<cec_adapter_descriptor> res;
+   for( int i=0; i<count; i++ ) {
+      res.push_back(dev_list[i]);
+   }
+
+   free(dev_list);
+   return res;
 }
 
 static PyObject * list_adapters(PyObject * self, PyObject * args) {
    PyObject * result = NULL;
 
    if( PyArg_ParseTuple(args, ":list_adapters") ) {
+      std::list<cec_adapter_descriptor> dev_list = get_adapters();
       // set up our result list
       result = PyList_New(0);
 
       // populate our result list
-      // PyList_append(result, PyObject *)
+      std::list<cec_adapter_descriptor>::const_iterator itr;
+      for( itr = dev_list.begin(); itr != dev_list.end(); itr++ ) {
+         PyList_Append(result, Py_BuildValue("s", itr->strComName));
+         /* Convert all of the fields 
+         PyList_Append(result, Py_BuildValue("sshhhhii", 
+                  itr->strComName,
+                  itr->strComPath,
+                  itr->iVendorId,
+                  itr->iProductId,
+                  itr->iFirmwareVersion,
+                  itr->iPhysicalAddress,
+                  itr->iFirmwareBuildDate,
+                  itr->adapterType
+                  ));
+                  */
+      }
    }
 
    return result;
 }
 
 static PyObject * open(PyObject * self, PyObject * args) {
-   return open_callbacks->call(args);
+   PyObject * result = NULL;
+   const char * dev;
+  
+   if( PyArg_ParseTuple(args, "s:open", &dev) ) {
+      if( CEC_adapter->Open(dev) ) {
+         Py_INCREF(Py_None);
+         result = Py_None;
+      } else {
+         char errstr[1024];
+         snprintf(errstr, 1024, "Failed to open %s: %s", dev, strerror(errno));
+         PyErr_SetString(PyExc_IOError, errstr);
+      }
+   }
+
+   return result;
 }
 
 static PyObject * add_callback(PyObject * self, PyObject * args) {
@@ -186,7 +222,7 @@ PyMODINIT_FUNC initcec(void) {
    CEC_adapter = (ICECAdapter*)CECInitialise(CEC_config);
 
    if( !CEC_adapter ) {
-      // TODO: die
+      PyErr_SetString(PyExc_IOError, "Failed to initialize libcec");
       return;
    }
 
