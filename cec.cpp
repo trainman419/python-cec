@@ -215,10 +215,36 @@ static PyObject * add_callback(PyObject * self, PyObject * args) {
    return result;
 }
 
+static PyObject * volume_up(PyObject * self, PyObject * args) {
+   PyObject * result = NULL;
+
+   if( PyArg_ParseTuple(args, ":volume_up") ) {
+      CEC_adapter->VolumeUp();
+      Py_INCREF(Py_None);
+      result = Py_None;
+   }
+
+   return result;
+}
+
+static PyObject * volume_down(PyObject * self, PyObject * args) {
+   PyObject * result = NULL;
+
+   if( PyArg_ParseTuple(args, ":volume_up") ) {
+      CEC_adapter->VolumeUp();
+      Py_INCREF(Py_None);
+      result = Py_None;
+   }
+
+   return result;
+}
+
 static PyMethodDef CecMethods[] = {
    {"list_adapters", list_adapters, METH_VARARGS, "List available adapters"},
    {"open", open, METH_VARARGS, "Open an adapter"},
    {"add_callback", add_callback, METH_VARARGS, "Add a callback"},
+   {"volume_up",   volume_up,   METH_VARARGS, "Volume Up"},
+   {"volume_down", volume_down, METH_VARARGS, "Volume Down"},
    {NULL, NULL, 0, NULL}
 };
 
