@@ -172,9 +172,11 @@ static PyObject * open(PyObject * self, PyObject * args) {
             Py_INCREF(Py_None);
             result = Py_None;
          } else {
+            CECDestroy(CEC_adapter);
+            CEC_adapter = NULL;
+
             char errstr[1024];
-            snprintf(errstr, 1024, "Failed to open %s: %s", dev, 
-                     strerror(errno));
+            snprintf(errstr, 1024, "Failed to open %s", dev);
             PyErr_SetString(PyExc_IOError, errstr);
          }
       } else {
@@ -185,8 +187,11 @@ static PyObject * open(PyObject * self, PyObject * args) {
          Py_INCREF(Py_None);
          result = Py_None;
       } else {
+         CECDestroy(CEC_adapter);
+         CEC_adapter = NULL;
+
          char errstr[1024];
-         snprintf(errstr, 1024, "Failed to open %s: %s", dev, strerror(errno));
+         snprintf(errstr, 1024, "CEC failed to open %s", dev);
          PyErr_SetString(PyExc_IOError, errstr);
       }
    }
@@ -232,6 +237,8 @@ PyMODINIT_FUNC initcec(void) {
    snprintf(CEC_config->strDeviceName, 13, "python-cec");
    CEC_config->clientVersion = CEC_CLIENT_VERSION_CURRENT;
    CEC_config->bActivateSource = 0;
+   CEC_config->deviceTypes.Add(CEC_DEVICE_TYPE_RECORDING_DEVICE);
+
 
    //  libcec callbacks
    CEC_callbacks = new ICECCallbacks();
@@ -247,6 +254,5 @@ PyMODINIT_FUNC initcec(void) {
    }
 
    CEC_adapter->InitVideoStandalone();
-   // TODO: initialize libcec here
    Py_InitModule("cec", CecMethods);
 }
