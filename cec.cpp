@@ -104,6 +104,9 @@ CallbackList * open_callbacks; // TODO: remove/update
 ICECAdapter * CEC_adapter;
 
 std::list<cec_adapter_descriptor> get_adapters() {
+   std::list<cec_adapter_descriptor> res;
+   // release the Global Interpreter lock
+   Py_BEGIN_ALLOW_THREADS
    // get adapters
    int cec_count = 10;
    cec_adapter_descriptor * dev_list = (cec_adapter_descriptor*)malloc(
@@ -117,12 +120,13 @@ std::list<cec_adapter_descriptor> get_adapters() {
       count = std::min(count, cec_count);
    }
 
-   std::list<cec_adapter_descriptor> res;
    for( int i=0; i<count; i++ ) {
       res.push_back(dev_list[i]);
    }
 
    free(dev_list);
+   // acquire the GIL before returning to code that uses python objects
+   Py_END_ALLOW_THREADS
    return res;
 }
 
@@ -158,7 +162,7 @@ static PyObject * list_adapters(PyObject * self, PyObject * args) {
 
 static PyObject * open(PyObject * self, PyObject * args) {
    PyObject * result = NULL;
-   const char * dev;
+   const char * dev = NULL;
 
    // this is NOT the right way to parse optional args in C...
    //  it doesn't produce good error messages; sometimes reports 0 args, other
@@ -168,22 +172,19 @@ static PyObject * open(PyObject * self, PyObject * args) {
       std::list<cec_adapter_descriptor> devs = get_adapters();
       if( devs.size() > 0 ) {
          dev = devs.front().strComName;
-         if( CEC_adapter->Open(dev) ) {
-            Py_INCREF(Py_None);
-            result = Py_None;
-         } else {
-            CECDestroy(CEC_adapter);
-            CEC_adapter = NULL;
-
-            char errstr[1024];
-            snprintf(errstr, 1024, "Failed to open %s", dev);
-            PyErr_SetString(PyExc_IOError, errstr);
-         }
       } else {
          PyErr_SetString(PyExc_Exception, "No default adapter found");
       }
-   } else if( PyArg_ParseTuple(args, "s:open", &dev) ) {
-      if( CEC_adapter->Open(dev) ) {
+   } else {
+      PyArg_ParseTuple(args, "s:open", &dev);
+   }
+
+   if( dev ) {
+      bool success = false;
+      Py_BEGIN_ALLOW_THREADS
+      success = CEC_adapter->Open(dev);
+      Py_END_ALLOW_THREADS
+      if( success ) {
          Py_INCREF(Py_None);
          result = Py_None;
       } else {
