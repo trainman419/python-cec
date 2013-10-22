@@ -10,6 +10,8 @@
 #include <libcec/cec.h>
 #include <list>
 
+#include "device.h"
+
 using namespace CEC;
 
 // Basic design/usage:
