@@ -24,5 +24,5 @@ struct cec_DeviceObject {
    char                       strAddr[8];
    CEC::cec_menu_language     lang;
 
-   cec_DeviceObject(CEC::cec_adapter * adapter, CEC::cec_logical_address addr);
+   cec_DeviceObject(CEC::ICECAdapter * adapter, CEC::cec_logical_address &addr);
 };
