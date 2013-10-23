@@ -1,6 +1,6 @@
 # python-cec - libcec bindings for Python
 
-## Proposed API
+## API
 
 
 ```
