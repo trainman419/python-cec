@@ -10,29 +10,29 @@ adapters = cec.list_adapters()
 
 cec.open( adapter = cec.DEFAULT )
 
-cec.close()
+cec.close() // not implemented yet
 
-cec.add_callback( event, handler )
+cec.add_callback( event, handler ) // not implemented yet
 
-cec.remove_callback( event, handler )
+cec.remove_callback( event, handler ) // not implemented yet
 
 devices = cec.list_devices()
 
 class Device:
-   on()
+   is_on()
+   power_on()
    standby()
    address
+   physical_address
    vendor
-   osd_string
-   cec_version
-   power_status
-   language
-   name?
+   osd_string // not implemented yet
+   cec_version // not implemented yet
+   language // not implemented yet
    #TODO: get volume
    #TODO: get active input
 
-cec.set_active_source()
-cec.set_inactive_source()
+cec.set_active_source() // not implemented yet
+cec.set_inactive_source() // not implemented yet
 
 cec.volume_up()
 cec.volume_down()
