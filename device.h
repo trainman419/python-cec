@@ -9,10 +9,9 @@
 
 #include <libcec/cec.h>
 
-struct cec_DeviceObject {
+struct Device {
    PyObject_HEAD
 
-   CEC::ICECAdapter *         adapter;
    CEC::cec_logical_address   addr;
 
    uint64_t                   vendorId;
@@ -23,6 +22,6 @@ struct cec_DeviceObject {
    CEC::cec_osd_name          osdName;
    char                       strAddr[8];
    CEC::cec_menu_language     lang;
-
-   cec_DeviceObject(CEC::ICECAdapter * adapter, CEC::cec_logical_address &addr);
 };
+
+PyTypeObject * DeviceTypeInit(CEC::ICECAdapter * adapter);

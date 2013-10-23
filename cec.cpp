@@ -283,5 +283,15 @@ PyMODINIT_FUNC initcec(void) {
    }
 
    CEC_adapter->InitVideoStandalone();
-   Py_InitModule("cec", CecMethods);
+
+   // set up python module
+   PyTypeObject * dev = DeviceTypeInit(CEC_adapter);
+   if(PyType_Ready(dev) < 0 ) return;
+
+   PyObject * m = Py_InitModule("cec", CecMethods);
+
+   if( m == NULL ) return;
+
+   Py_INCREF(dev);
+   PyModule_AddObject(m, "Device", (PyObject*)dev);
 }

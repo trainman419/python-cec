@@ -9,30 +9,26 @@
 
 using namespace CEC;
 
-cec_DeviceObject::cec_DeviceObject(ICECAdapter * dapter, 
-      cec_logical_address & ddr) :
-   adapter(dapter), addr(ddr)
-{
+static ICECAdapter * adapter;
+
+static PyObject * Device_getAddr(Device * self, void * closure) {
 }
 
-static PyObject * Device_getAddr(cec_DeviceObject * self, void * closure) {
-}
-
-static PyObject * Device_getPhysicalAddress(cec_DeviceObject * self,
+static PyObject * Device_getPhysicalAddress(Device * self,
       void * closure) {
 }
 
-static PyObject * Device_getVendor(cec_DeviceObject * self, void * closure) {
+static PyObject * Device_getVendor(Device * self, void * closure) {
 }
 
-static PyObject * Device_getOsdString(cec_DeviceObject * self, void * closure) {
+static PyObject * Device_getOsdString(Device * self, void * closure) {
 }
 
-static PyObject * Device_getCECVersion(cec_DeviceObject * self,
+static PyObject * Device_getCECVersion(Device * self,
       void * closure) {
 }
 
-static PyObject * Device_getLanguage(cec_DeviceObject * self, void * closure) {
+static PyObject * Device_getLanguage(Device * self, void * closure) {
 }
 
 static PyGetSetDef Device_getset[] = {
@@ -51,13 +47,39 @@ static PyGetSetDef Device_getset[] = {
    {NULL}
 };
 
-static PyObject * Device_is_on(cec_DeviceObject * self) {
+static PyObject * Device_is_on(Device * self) {
 }
 
-static PyObject * Device_power_on(cec_DeviceObject * self) {
+static PyObject * Device_power_on(Device * self) {
 }
 
-static PyObject * Device_standby(cec_DeviceObject * self) {
+static PyObject * Device_standby(Device * self) {
+}
+
+static PyObject * Device_new(PyTypeObject * type, PyObject * args, 
+      PyObject * kwds) {
+   Device * self;
+
+   int addr;
+
+   if( !PyArg_ParseTuple(args, "i:Device new", &addr) ) {
+      return NULL;
+   }
+   if( addr < 0 ) {
+      PyErr_SetString(PyExc_ValueError, "Logical address should be >= 0");
+      return NULL;
+   }
+   if( addr > 15 ) {
+      PyErr_SetString(PyExc_ValueError, "Logical address should be < 16");
+      return NULL;
+   }
+
+   self = (Device*)type->tp_alloc(type, 0);
+   if( self != NULL ) {
+      //self->addr = addr;
+   }
+
+   return (PyObject *)self;
 }
 
 static PyMethodDef Device_methods[] = {
@@ -70,11 +92,11 @@ static PyMethodDef Device_methods[] = {
    {NULL}
 };
 
-static PyTypeObject cec_DeviceType = {
+static PyTypeObject DeviceType = {
    PyObject_HEAD_INIT(NULL)
    0,                         /*ob_size*/
    "cec.Device",              /*tp_name*/
-   sizeof(cec_DeviceObject),  /*tp_basicsize*/
+   sizeof(Device),            /*tp_basicsize*/
    0,                         /*tp_itemsize*/
    0,                         /*tp_dealloc*/
    0,                         /*tp_print*/
@@ -94,3 +116,11 @@ static PyTypeObject cec_DeviceType = {
    Py_TPFLAGS_DEFAULT,        /*tp_flags*/
    "CEC Device objects",      /* tp_doc */
 };
+
+PyTypeObject * DeviceTypeInit(ICECAdapter * a) {
+   adapter = a;
+   DeviceType.tp_new = Device_new;
+   DeviceType.tp_methods = Device_methods;
+   DeviceType.tp_getset = Device_getset;
+   return & DeviceType;
+}
