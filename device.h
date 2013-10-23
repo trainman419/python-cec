@@ -14,14 +14,13 @@ struct Device {
 
    CEC::cec_logical_address   addr;
 
-   uint64_t                   vendorId;
-   uint16_t                   physicalAddress;
+   PyObject *                 vendorId;
+   PyObject *                 physicalAddress;
    bool                       active;
-   CEC::cec_version           cecVersion;
-   CEC::cec_power_status      power;
-   CEC::cec_osd_name          osdName;
+   PyObject *                 cecVersion;
+   PyObject *                 osdName;
    char                       strAddr[8];
-   CEC::cec_menu_language     lang;
+   PyObject *                 lang;
 };
 
 PyTypeObject * DeviceTypeInit(CEC::ICECAdapter * adapter);

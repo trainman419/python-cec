@@ -12,23 +12,31 @@ using namespace CEC;
 static ICECAdapter * adapter;
 
 static PyObject * Device_getAddr(Device * self, void * closure) {
+   return Py_BuildValue("b", self->addr);
 }
 
 static PyObject * Device_getPhysicalAddress(Device * self,
       void * closure) {
+   Py_INCREF(self->physicalAddress);
+   return self->physicalAddress;
 }
 
 static PyObject * Device_getVendor(Device * self, void * closure) {
+   Py_INCREF(self->vendorId);
+   return self->vendorId;
 }
 
 static PyObject * Device_getOsdString(Device * self, void * closure) {
+   Py_RETURN_NONE; // TODO
 }
 
 static PyObject * Device_getCECVersion(Device * self,
       void * closure) {
+   Py_RETURN_NONE; // TODO
 }
 
 static PyObject * Device_getLanguage(Device * self, void * closure) {
+   Py_RETURN_NONE; // TODO
 }
 
 static PyGetSetDef Device_getset[] = {
@@ -48,21 +56,48 @@ static PyGetSetDef Device_getset[] = {
 };
 
 static PyObject * Device_is_on(Device * self) {
+   cec_power_status power = adapter->GetDevicePowerStatus(self->addr);
+   PyObject * ret;
+   switch(power) {
+      case CEC_POWER_STATUS_ON:
+      case CEC_POWER_STATUS_IN_TRANSITION_ON_TO_STANDBY:
+         ret = Py_True;
+         break;
+      case CEC_POWER_STATUS_STANDBY:
+      case CEC_POWER_STATUS_IN_TRANSITION_STANDBY_TO_ON:
+         ret = Py_False;
+         break;
+      case CEC_POWER_STATUS_UNKNOWN:
+         PyErr_SetString(PyExc_IOError, "Power status not found");
+         return NULL;
+   }
+   Py_INCREF(ret);
+   return ret;
 }
 
 static PyObject * Device_power_on(Device * self) {
+   if( adapter->PowerOnDevices(self->addr) ) {
+      Py_RETURN_TRUE;
+   } else {
+      Py_RETURN_FALSE;
+   }
 }
 
 static PyObject * Device_standby(Device * self) {
+   if( adapter->StandbyDevices(self->addr) ) {
+      Py_RETURN_TRUE;
+   } else {
+      Py_RETURN_FALSE;
+   }
 }
 
 static PyObject * Device_new(PyTypeObject * type, PyObject * args, 
       PyObject * kwds) {
    Device * self;
 
-   int addr;
+   unsigned char addr;
 
-   if( !PyArg_ParseTuple(args, "i:Device new", &addr) ) {
+   if( !PyArg_ParseTuple(args, "b:Device new", &addr) ) {
       return NULL;
    }
    if( addr < 0 ) {
@@ -76,7 +111,24 @@ static PyObject * Device_new(PyTypeObject * type, PyObject * args,
 
    self = (Device*)type->tp_alloc(type, 0);
    if( self != NULL ) {
-      //self->addr = addr;
+      self->addr = (cec_logical_address)addr;
+      uint64_t vendor = adapter->GetDeviceVendorId(self->addr);
+      if( ! (self->vendorId = Py_BuildValue("l", vendor)) ) return NULL;
+
+      uint16_t physicalAddress = adapter->GetDevicePhysicalAddress(self->addr);
+      char strAddr[8];
+      snprintf(strAddr, 8, "%x.%x.%x.%x", 
+            (physicalAddress >> 12) & 0xF,
+            (physicalAddress >> 8) & 0xF,
+            (physicalAddress >> 4) & 0xF,
+            physicalAddress & 0xF);
+      self->physicalAddress = Py_BuildValue("s", strAddr);
+
+      cec_version ver = adapter->GetDeviceCecVersion(self->addr);
+      // TODO: cec version to python type
+      cec_osd_name name = adapter->GetDeviceOSDName(self->addr);
+      // TODO: osd name to python type
+      // TODO: get language and convert to python type
    }
 
    return (PyObject *)self;
