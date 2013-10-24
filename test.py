@@ -14,10 +14,7 @@ if len(adapters) > 0:
    print "Using Adapter %s"%(adapter)
    cec.open()
 
-   print "Success?!"
-
    d = cec.Device(0)
-   print dir(d)
 
    # print fields
    print "Address:", d.address
@@ -42,3 +39,5 @@ if len(adapters) > 0:
       print "Sleeping to allow device to power off"
       time.sleep(30)
       print d.is_on()
+
+   print "Success!"
