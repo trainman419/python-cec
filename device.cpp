@@ -32,7 +32,8 @@ static PyObject * Device_getOsdString(Device * self, void * closure) {
 
 static PyObject * Device_getCECVersion(Device * self,
       void * closure) {
-   Py_RETURN_NONE; // TODO
+   Py_INCREF(self->cecVersion);
+   return self->cecVersion;
 }
 
 static PyObject * Device_getLanguage(Device * self, void * closure) {
@@ -113,7 +114,9 @@ static PyObject * Device_new(PyTypeObject * type, PyObject * args,
    if( self != NULL ) {
       self->addr = (cec_logical_address)addr;
       uint64_t vendor = adapter->GetDeviceVendorId(self->addr);
-      if( ! (self->vendorId = Py_BuildValue("l", vendor)) ) return NULL;
+      char vendor_str[7];
+      snprintf(vendor_str, 7, "%06lX", vendor);
+      if( ! (self->vendorId = Py_BuildValue("s", vendor_str)) ) return NULL;
 
       uint16_t physicalAddress = adapter->GetDevicePhysicalAddress(self->addr);
       char strAddr[8];
@@ -125,7 +128,31 @@ static PyObject * Device_new(PyTypeObject * type, PyObject * args,
       self->physicalAddress = Py_BuildValue("s", strAddr);
 
       cec_version ver = adapter->GetDeviceCecVersion(self->addr);
-      // TODO: cec version to python type
+      const char * ver_str;
+      switch(ver) {
+         case CEC_VERSION_1_2:
+            ver_str = "1.2";
+            break;
+         case CEC_VERSION_1_2A:
+            ver_str = "1.2a";
+            break;
+         case CEC_VERSION_1_3:
+            ver_str = "1.3";
+            break;
+         case CEC_VERSION_1_3A:
+            ver_str = "1.3a";
+            break;
+         case CEC_VERSION_1_4:
+            ver_str = "1.4";
+            break;
+         case CEC_VERSION_UNKNOWN:
+         default:
+            ver_str = "Unknown";
+            break;
+      }
+
+      if( !(self->cecVersion = Py_BuildValue("s", ver_str)) ) return NULL;
+
       cec_osd_name name = adapter->GetDeviceOSDName(self->addr);
       // TODO: osd name to python type
       // TODO: get language and convert to python type
