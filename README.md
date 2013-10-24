@@ -49,9 +49,9 @@ tv.power_on()
 ```python
 import cec
 
-adapters = cec.list_adapters()
+adapters = cec.list_adapters() # may be called before init()
 
-cec.open(adapter=cec.DEFAULT)
+cec.init(adapter=cec.DEFAULT)
 
 cec.close()  # not implemented yet
 
