@@ -16,10 +16,8 @@ struct Device {
 
    PyObject *                 vendorId;
    PyObject *                 physicalAddress;
-   bool                       active;
    PyObject *                 cecVersion;
    PyObject *                 osdName;
-   char                       strAddr[8];
    PyObject *                 lang;
 };
 

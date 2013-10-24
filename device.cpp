@@ -27,7 +27,8 @@ static PyObject * Device_getVendor(Device * self, void * closure) {
 }
 
 static PyObject * Device_getOsdString(Device * self, void * closure) {
-   Py_RETURN_NONE; // TODO
+   Py_INCREF(self->osdName);
+   return self->osdName;
 }
 
 static PyObject * Device_getCECVersion(Device * self,
@@ -37,7 +38,8 @@ static PyObject * Device_getCECVersion(Device * self,
 }
 
 static PyObject * Device_getLanguage(Device * self, void * closure) {
-   Py_RETURN_NONE; // TODO
+   Py_INCREF(self->lang);
+   return self->lang;
 }
 
 static PyGetSetDef Device_getset[] = {
@@ -154,7 +156,13 @@ static PyObject * Device_new(PyTypeObject * type, PyObject * args,
       if( !(self->cecVersion = Py_BuildValue("s", ver_str)) ) return NULL;
 
       cec_osd_name name = adapter->GetDeviceOSDName(self->addr);
-      // TODO: osd name to python type
+      if( !(self->osdName = Py_BuildValue("s", name.name)) ) return NULL;
+
+      cec_menu_language lang;
+      adapter->GetDeviceMenuLanguage(self->addr, &lang);
+
+
+      if( !(self->lang = Py_BuildValue("s", lang.language)) ) return NULL;
       // TODO: get language and convert to python type
    }
 

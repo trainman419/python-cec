@@ -20,15 +20,15 @@ if len(adapters) > 0:
    print dir(d)
 
    # print fields
-   print d.address
-   print d.physical_address
-   print d.vendor
-   print d.osd_string
-   print d.cec_version
-   print d.language
+   print "Address:", d.address
+   print "Physical Address:", d.physical_address
+   print "Vendor ID:", d.vendor
+   print "OSD:", d.osd_string
+   print "CEC Version:", d.cec_version
+   print "Language:", d.language
 
    # call functions
-   print d.is_on()
+   print "ON:", d.is_on()
 
    if test_power:
       print "Powering device on"

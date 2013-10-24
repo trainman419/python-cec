@@ -54,7 +54,7 @@ cec.add_callback( event, handler ) // not implemented yet
 
 cec.remove_callback( event, handler ) // not implemented yet
 
-devices = cec.list_devices()
+devices = cec.list_devices() // not implemented yet
 
 class Device:
    is_on()
@@ -63,9 +63,9 @@ class Device:
    address
    physical_address
    vendor
-   osd_string // not implemented yet
-   cec_version // not implemented yet
-   language // not implemented yet
+   osd_string
+   cec_version
+   language
    #TODO: get volume
    #TODO: get active input
 
