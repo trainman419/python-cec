@@ -14,6 +14,8 @@ if len(adapters) > 0:
    print "Using Adapter %s"%(adapter)
    cec.init()
 
+   print "Devices:", cec.list_devices()
+
    d = cec.Device(0)
 
    # print fields

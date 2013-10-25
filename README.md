@@ -59,7 +59,7 @@ cec.add_callback(event, handler)  # not implemented yet
 
 cec.remove_callback(event, handler)  # not implemented yet
 
-devices = cec.list_devices()  # not implemented yet
+devices = cec.list_devices()
 
 class Device:
    is_on()

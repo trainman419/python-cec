@@ -92,6 +92,7 @@ class CallbackList {
 CallbackList * open_callbacks; // TODO: remove/update
 
 ICECAdapter * CEC_adapter;
+PyObject * Device;
 
 std::list<cec_adapter_descriptor> get_adapters() {
    std::list<cec_adapter_descriptor> res;
@@ -190,6 +191,37 @@ static PyObject * init(PyObject * self, PyObject * args) {
    return result;
 }
 
+static PyObject * list_devices(PyObject * self, PyObject * args) {
+   PyObject * result = NULL;
+
+   if( PyArg_ParseTuple(args, ":list_devices") ) {
+      cec_logical_addresses devices;
+      Py_BEGIN_ALLOW_THREADS
+      devices = CEC_adapter->GetActiveDevices();
+      Py_END_ALLOW_THREADS
+
+      //result = PyList_New(0);
+      result = PyDict_New();
+      for( uint8_t i=0; i<32; i++ ) {
+         if( devices[i] ) {
+            PyObject * ii = Py_BuildValue("(b)", i);
+            PyObject * dev = PyObject_CallObject(Device, ii);
+            Py_DECREF(ii);
+            if( dev ) {
+               //PyList_Append(result, dev); 
+               PyDict_SetItem(result, Py_BuildValue("b", i), dev);
+            } else {
+               Py_DECREF(result);
+               result = NULL;
+               break;
+            }
+         }
+      }
+   }
+
+   return result;
+}
+
 static PyObject * add_callback(PyObject * self, PyObject * args) {
    PyObject * result = NULL;
    PyObject * temp;
@@ -233,6 +265,7 @@ static PyObject * volume_down(PyObject * self, PyObject * args) {
 static PyMethodDef CecMethods[] = {
    {"list_adapters", list_adapters, METH_VARARGS, "List available adapters"},
    {"init", init, METH_VARARGS, "Open an adapter"},
+   {"list_devices", list_devices, METH_VARARGS, "List devices"},
    {"add_callback", add_callback, METH_VARARGS, "Add a callback"},
    {"volume_up",   volume_up,   METH_VARARGS, "Volume Up"},
    {"volume_down", volume_down, METH_VARARGS, "Volume Down"},
@@ -274,6 +307,7 @@ PyMODINIT_FUNC initcec(void) {
 
    // set up python module
    PyTypeObject * dev = DeviceTypeInit(CEC_adapter);
+   Device = (PyObject*)dev;
    if(PyType_Ready(dev) < 0 ) return;
 
    PyObject * m = Py_InitModule("cec", CecMethods);

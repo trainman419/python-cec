@@ -160,13 +160,25 @@ static PyObject * Device_new(PyTypeObject * type, PyObject * args,
 
       cec_menu_language lang;
       adapter->GetDeviceMenuLanguage(self->addr, &lang);
-
-
       if( !(self->lang = Py_BuildValue("s", lang.language)) ) return NULL;
-      // TODO: get language and convert to python type
    }
 
    return (PyObject *)self;
+}
+
+static void Device_dealloc(Device * self) {
+   Py_DECREF(self->vendorId);
+   Py_DECREF(self->physicalAddress);
+   Py_DECREF(self->cecVersion);
+   Py_DECREF(self->osdName);
+   Py_DECREF(self->lang);
+   self->ob_type->tp_free((PyObject*)self);
+}
+
+static PyObject * Device_str(Device * self) {
+   char addr[16];
+   snprintf(addr, 16, "CEC Device %d", self->addr);
+   return Py_BuildValue("s", addr);
 }
 
 static PyMethodDef Device_methods[] = {
@@ -185,7 +197,7 @@ static PyTypeObject DeviceType = {
    "cec.Device",              /*tp_name*/
    sizeof(Device),            /*tp_basicsize*/
    0,                         /*tp_itemsize*/
-   0,                         /*tp_dealloc*/
+   (destructor)Device_dealloc, /*tp_dealloc*/
    0,                         /*tp_print*/
    0,                         /*tp_getattr*/
    0,                         /*tp_setattr*/
@@ -196,7 +208,7 @@ static PyTypeObject DeviceType = {
    0,                         /*tp_as_mapping*/
    0,                         /*tp_hash */
    0,                         /*tp_call*/
-   0,                         /*tp_str*/
+   (reprfunc)Device_str,      /*tp_str*/
    0,                         /*tp_getattro*/
    0,                         /*tp_setattro*/
    0,                         /*tp_as_buffer*/
