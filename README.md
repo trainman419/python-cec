@@ -71,14 +71,18 @@ class Device:
    osd_string
    cec_version
    language
-   # TODO: get volume
-   # TODO: get active input
+   is_active() # not implemented yet
 
+cec.is_active_source() # not implemented yet
 cec.set_active_source()  # not implemented yet
 cec.set_inactive_source()  # not implemented yet
 
 cec.volume_up()
 cec.volume_down()
+# TODO: mute/unmute
+# TODO: audio status
 
-# TODO: set physical address
+cec.set_physical_address(addr) # not implemented yet
+
+cec.set_stream_path(addr) # not implemented yet
 ```
