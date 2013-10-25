@@ -37,7 +37,7 @@ A simple example to turn your TV on:
 ```python
 import cec
 
-cec.open()
+cec.init()
 
 tv = cec.Device(0)
 tv.power_on()
