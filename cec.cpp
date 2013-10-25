@@ -16,18 +16,6 @@ using namespace CEC;
 
 // Basic design/usage:
 //
-// On module load:
-// ( import cec )
-//    call CECInitialize() and get THE ICECAdapter instance
-//    call InitVideoStandalone
-// 
-// ( adapters = cec.list_adapters() )
-//    call ICECAdapter::DetectAdapters
-//
-// ( cec.open( adapter = cec.default_adapter ) )
-//    call DetectAdapters and choose the first adapter for default
-//    call ICECAdapter::Open(...).
-//
 // ( cec.add_callback(event, handler) )
 //    ???
 //
@@ -162,7 +150,7 @@ static PyObject * list_adapters(PyObject * self, PyObject * args) {
    return result;
 }
 
-static PyObject * open(PyObject * self, PyObject * args) {
+static PyObject * init(PyObject * self, PyObject * args) {
    PyObject * result = NULL;
    const char * dev = NULL;
 
@@ -170,7 +158,7 @@ static PyObject * open(PyObject * self, PyObject * args) {
    //  it doesn't produce good error messages; sometimes reports 0 args, other
    //  time 1 required
    // HOWEVER, it works.     Bitches.
-   if( PyArg_ParseTuple(args, ":open") ) {
+   if( PyArg_ParseTuple(args, ":init") ) {
       std::list<cec_adapter_descriptor> devs = get_adapters();
       if( devs.size() > 0 ) {
          dev = devs.front().strComName;
@@ -178,7 +166,7 @@ static PyObject * open(PyObject * self, PyObject * args) {
          PyErr_SetString(PyExc_Exception, "No default adapter found");
       }
    } else {
-      PyArg_ParseTuple(args, "s:open", &dev);
+      PyArg_ParseTuple(args, "s:init", &dev);
    }
 
    if( dev ) {
@@ -244,7 +232,7 @@ static PyObject * volume_down(PyObject * self, PyObject * args) {
 
 static PyMethodDef CecMethods[] = {
    {"list_adapters", list_adapters, METH_VARARGS, "List available adapters"},
-   {"open", open, METH_VARARGS, "Open an adapter"},
+   {"init", init, METH_VARARGS, "Open an adapter"},
    {"add_callback", add_callback, METH_VARARGS, "Add a callback"},
    {"volume_up",   volume_up,   METH_VARARGS, "Volume Up"},
    {"volume_down", volume_down, METH_VARARGS, "Volume Down"},
