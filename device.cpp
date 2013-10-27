@@ -94,6 +94,46 @@ static PyObject * Device_standby(Device * self) {
    }
 }
 
+static PyObject * Device_av_input(Device * self, PyObject * args) {
+   unsigned char input;
+   if( PyArg_ParseTuple(args, "b:set_av_input", &input) ) {
+      cec_command data;
+      data.initiator = adapter->GetLogicalAddresses().primary;
+      data.destination = self->addr;
+      data.opcode = CEC_OPCODE_USER_CONTROL_PRESSED;
+      data.opcode_set = 1;
+      data.PushBack(0x69);
+      data.PushBack(input);
+      if( adapter->Transmit(data) ) {
+         Py_RETURN_TRUE;
+      } else {
+         Py_RETURN_FALSE;
+      }
+   } else {
+      return NULL;
+   }
+}
+
+static PyObject * Device_audio_input(Device * self, PyObject * args) {
+   unsigned char input;
+   if( PyArg_ParseTuple(args, "b:set_audio_input", &input) ) {
+      cec_command data;
+      data.initiator = adapter->GetLogicalAddresses().primary;
+      data.destination = self->addr;
+      data.opcode = CEC_OPCODE_USER_CONTROL_PRESSED;
+      data.opcode_set = 1;
+      data.PushBack(0x6a);
+      data.PushBack(input);
+      if( adapter->Transmit(data) ) {
+         Py_RETURN_TRUE;
+      } else {
+         Py_RETURN_FALSE;
+      }
+   } else {
+      return NULL;
+   }
+}
+
 static PyObject * Device_new(PyTypeObject * type, PyObject * args, 
       PyObject * kwds) {
    Device * self;
@@ -188,6 +228,10 @@ static PyMethodDef Device_methods[] = {
       "Power on this device"},
    {"standby", (PyCFunction)Device_standby, METH_NOARGS, 
       "Put this device into standby"},
+   {"set_av_input", (PyCFunction)Device_av_input, METH_VARARGS,
+      "Select AV Input"},
+   {"set_audio_input", (PyCFunction)Device_audio_input, METH_VARARGS,
+      "Select Audio Input"},
    {NULL}
 };
 

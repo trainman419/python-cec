@@ -72,6 +72,8 @@ class Device:
    cec_version
    language
    is_active() # not implemented yet
+   set_av_input(input)
+   set_audio_input(input)
 
 cec.is_active_source() # not implemented yet
 cec.set_active_source()  # not implemented yet
