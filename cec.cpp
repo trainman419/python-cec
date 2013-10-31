@@ -327,6 +327,19 @@ PyObject * set_physical_addr(PyObject * self, PyObject * args) {
 }
 
 PyObject * set_port(PyObject * self, PyObject * args) {
+   unsigned char dev, port;
+   if( PyArg_ParseTuple(args, "bb", &dev, &port) ) {
+      if( dev > 15 ) {
+         PyErr_SetString(PyExc_ValueError, "Invalid logical address");
+         return NULL;
+      }
+      if( port > 15 ) {
+         PyErr_SetString(PyExc_ValueError, "Invalid port");
+         return NULL;
+      }
+      RETURN_BOOL(CEC_adapter->SetHDMIPort((cec_logical_address)dev, port));
+   }
+   return NULL;
 }
 
 PyObject * can_persist_config(PyObject * self, PyObject * args) {
@@ -367,6 +380,7 @@ static PyMethodDef CecMethods[] = {
       "return true if the current adapter can persist the CEC configuration"},
    {"persist_config", persist_config, METH_VARARGS,
       "persist CEC configuration to adapter"},
+   {"set_port", set_port, METH_VARARGS, "Set upstream HDMI port"},
    {NULL, NULL, 0, NULL}
 };
 

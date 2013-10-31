@@ -87,4 +87,5 @@ cec.volume_down()
 cec.set_physical_address(addr)
 cec.can_persist_config()
 cec.persist_config()
+cec.set_port(device, port)
 ```
