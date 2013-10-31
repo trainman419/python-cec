@@ -84,7 +84,5 @@ cec.volume_down()
 # TODO: mute/unmute
 # TODO: audio status
 
-cec.set_physical_address(addr) # not implemented yet
-
-cec.set_stream_path(addr) # not implemented yet
+cec.set_physical_address(addr)
 ```

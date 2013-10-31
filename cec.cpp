@@ -312,6 +312,20 @@ static PyObject * set_stream_path(PyObject * self, PyObject * args) {
    return NULL;
 }
 
+PyObject * set_physical_addr(PyObject * self, PyObject * args) {
+   char * addr_s;
+   if( PyArg_ParseTuple(args, "s:set_physical_addr", &addr_s) ) {
+      int addr = parse_physical_addr(addr_s);
+      if( addr >= 0 ) {
+         RETURN_BOOL(CEC_adapter->SetPhysicalAddress((uint16_t)addr));
+      } else {
+         PyErr_SetString(PyExc_ValueError, "Invalid physical address");
+         return NULL;
+      }
+   }
+   return NULL;
+}
+
 static PyMethodDef CecMethods[] = {
    {"list_adapters", list_adapters, METH_VARARGS, "List available adapters"},
    {"init", init, METH_VARARGS, "Open an adapter"},
@@ -319,6 +333,8 @@ static PyMethodDef CecMethods[] = {
    {"add_callback", add_callback, METH_VARARGS, "Add a callback"},
    {"volume_up",   volume_up,   METH_VARARGS, "Volume Up"},
    {"volume_down", volume_down, METH_VARARGS, "Volume Down"},
+   {"set_stream_path", set_stream_path, METH_VARARGS, "Set HDMI stream path"},
+   {"set_physical_addr", set_physical_addr, METH_VARARGS, "Set HDMI physical address"},
    {NULL, NULL, 0, NULL}
 };
 
