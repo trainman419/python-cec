@@ -12,7 +12,7 @@ print adapters
 if len(adapters) > 0:
    adapter = adapters[0]
    print "Using Adapter %s"%(adapter)
-   cec.init()
+   cec.init(adapter)
 
    print "Devices:", cec.list_devices()
 

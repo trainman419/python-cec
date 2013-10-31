@@ -51,6 +51,34 @@ using namespace CEC;
 //    - source activated
 //
 
+int parse_physical_addr(char * addr) {
+   int a, b, c, d;
+   if( sscanf(addr, "%x.%x.%x.%x", &a, &b, &c, &d) == 4 ) {
+      if( a > 0xF || b > 0xF || c > 0xF || d > 0xF ) return -1;
+      if( a < 0 || b < 0 || c < 0 || d < 0 ) return -1;
+      return (a << 12) | (b << 8) | (c << 4) | d;
+   } else {
+      return -1;
+   }
+}
+
+#define RETURN_BOOL(arg) do { PyObject * ret = (arg)?Py_True:Py_False; Py_INCREF(ret); return ret; } while(0)
+
+int parse_test() {
+   assert(parse_physical_addr("0.0.0.0") == 0);
+   assert(parse_physical_addr("F.0.0.0") == 0xF000);
+   assert(parse_physical_addr("0.F.0.0") == 0x0F00);
+   assert(parse_physical_addr("0.0.F.0") == 0x00F0);
+   assert(parse_physical_addr("0.0.0.F") == 0x000F);
+   assert(parse_physical_addr("-1.0.0.0") == -1);
+   assert(parse_physical_addr("0.-1.0.0") == -1);
+   assert(parse_physical_addr("0.0.-1.0") == -1);
+   assert(parse_physical_addr("0.0.0.-1") == -1);
+   assert(parse_physical_addr("foo") == -1);
+   assert(parse_physical_addr("F.F.F.F") == 0xFFFF);
+   assert(parse_physical_addr("f.f.f.f") == 0xFFFF);
+}
+
 class CallbackList {
    private:
       std::list<PyObject*> callbacks;
@@ -155,19 +183,15 @@ static PyObject * init(PyObject * self, PyObject * args) {
    PyObject * result = NULL;
    const char * dev = NULL;
 
-   // this is NOT the right way to parse optional args in C...
-   //  it doesn't produce good error messages; sometimes reports 0 args, other
-   //  time 1 required
-   // HOWEVER, it works.     Bitches.
-   if( PyArg_ParseTuple(args, ":init") ) {
-      std::list<cec_adapter_descriptor> devs = get_adapters();
-      if( devs.size() > 0 ) {
-         dev = devs.front().strComName;
-      } else {
-         PyErr_SetString(PyExc_Exception, "No default adapter found");
+   if( PyArg_ParseTuple(args, "|s:init", &dev) ) {
+      if( !dev ) {
+         std::list<cec_adapter_descriptor> devs = get_adapters();
+         if( devs.size() > 0 ) {
+            dev = devs.front().strComName;
+         } else {
+            PyErr_SetString(PyExc_Exception, "No default adapter found");
+         }
       }
-   } else {
-      PyArg_ParseTuple(args, "s:init", &dev);
    }
 
    if( dev ) {
@@ -239,27 +263,53 @@ static PyObject * add_callback(PyObject * self, PyObject * args) {
 }
 
 static PyObject * volume_up(PyObject * self, PyObject * args) {
-   PyObject * result = NULL;
-
-   if( PyArg_ParseTuple(args, ":volume_up") ) {
-      CEC_adapter->VolumeUp();
-      Py_INCREF(Py_None);
-      result = Py_None;
-   }
-
-   return result;
+   if( PyArg_ParseTuple(args, ":volume_up") )
+      RETURN_BOOL(CEC_adapter->VolumeUp());
+   return NULL;
 }
 
 static PyObject * volume_down(PyObject * self, PyObject * args) {
-   PyObject * result = NULL;
+   if( PyArg_ParseTuple(args, ":volume_up") )
+      RETURN_BOOL(CEC_adapter->VolumeUp());
+   return NULL;
+}
 
-   if( PyArg_ParseTuple(args, ":volume_up") ) {
-      CEC_adapter->VolumeUp();
-      Py_INCREF(Py_None);
-      result = Py_None;
+static PyObject * set_stream_path(PyObject * self, PyObject * args) {
+   PyObject * arg;
+
+   if( PyArg_ParseTuple(args, "O:set_stream_path", &arg) ) {
+      Py_INCREF(arg);
+      if(PyInt_Check(arg)) {
+         long arg_l = PyInt_AsLong(arg);
+         Py_DECREF(arg);
+         if( arg_l < 0 || arg_l > 15 ) {
+            PyErr_SetString(PyExc_ValueError, "Logical address must be between 0 and 15");
+            return NULL;
+         } else {
+            RETURN_BOOL(CEC_adapter->SetStreamPath((cec_logical_address)arg_l));
+         }
+      } else if(PyString_Check(arg)) {
+         char * arg_s = PyString_AsString(arg);
+         if( arg_s ) {
+            int pa = parse_physical_addr(arg_s);
+            Py_DECREF(arg);
+            if( pa < 0 ) {
+               PyErr_SetString(PyExc_ValueError, "Invalid physical address");
+               return NULL;
+            } else {
+               RETURN_BOOL(CEC_adapter->SetStreamPath((uint16_t)pa));
+            }
+         } else {
+            Py_DECREF(arg);
+            return NULL;
+         }
+      } else {
+         PyErr_SetString(PyExc_TypeError, "parameter must be string or int");
+         return NULL;
+      }
    }
 
-   return result;
+   return NULL;
 }
 
 static PyMethodDef CecMethods[] = {
