@@ -326,6 +326,33 @@ PyObject * set_physical_addr(PyObject * self, PyObject * args) {
    return NULL;
 }
 
+PyObject * set_port(PyObject * self, PyObject * args) {
+}
+
+PyObject * can_persist_config(PyObject * self, PyObject * args) {
+   if( PyArg_ParseTuple(args, ":can_persist_config") ) {
+      RETURN_BOOL(CEC_adapter->CanPersistConfiguration());
+   }
+   return NULL;
+}
+
+PyObject * persist_config(PyObject * self, PyObject * args) {
+   if( PyArg_ParseTuple(args, ":persist_config") ) {
+      if( ! CEC_adapter->CanPersistConfiguration() ) {
+         PyErr_SetString(PyExc_NotImplementedError,
+               "Cannot persist configuration");
+         return NULL;
+      }
+      libcec_configuration config;
+      if( ! CEC_adapter->GetCurrentConfiguration(&config) ) {
+         PyErr_SetString(PyExc_IOError, "Could not get configuration");
+         return NULL;
+      }
+      RETURN_BOOL(CEC_adapter->PersistConfiguration(&config));
+   }
+   return NULL;
+}
+
 static PyMethodDef CecMethods[] = {
    {"list_adapters", list_adapters, METH_VARARGS, "List available adapters"},
    {"init", init, METH_VARARGS, "Open an adapter"},
@@ -334,7 +361,12 @@ static PyMethodDef CecMethods[] = {
    {"volume_up",   volume_up,   METH_VARARGS, "Volume Up"},
    {"volume_down", volume_down, METH_VARARGS, "Volume Down"},
    {"set_stream_path", set_stream_path, METH_VARARGS, "Set HDMI stream path"},
-   {"set_physical_addr", set_physical_addr, METH_VARARGS, "Set HDMI physical address"},
+   {"set_physical_addr", set_physical_addr, METH_VARARGS,
+      "Set HDMI physical address"},
+   {"can_persist_config", can_persist_config, METH_VARARGS,
+      "return true if the current adapter can persist the CEC configuration"},
+   {"persist_config", persist_config, METH_VARARGS,
+      "persist CEC configuration to adapter"},
    {NULL, NULL, 0, NULL}
 };
 

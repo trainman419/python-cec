@@ -85,4 +85,6 @@ cec.volume_down()
 # TODO: audio status
 
 cec.set_physical_address(addr)
+cec.can_persist_config()
+cec.persist_config()
 ```
