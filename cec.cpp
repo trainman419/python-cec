@@ -270,7 +270,7 @@ static PyObject * volume_up(PyObject * self, PyObject * args) {
 
 static PyObject * volume_down(PyObject * self, PyObject * args) {
    if( PyArg_ParseTuple(args, ":volume_up") )
-      RETURN_BOOL(CEC_adapter->VolumeUp());
+      RETURN_BOOL(CEC_adapter->VolumeDown());
    return NULL;
 }
 
