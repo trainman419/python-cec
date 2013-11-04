@@ -274,6 +274,12 @@ static PyObject * volume_down(PyObject * self, PyObject * args) {
    return NULL;
 }
 
+static PyObject * toggle_mute(PyObject * self, PyObject * args) {
+   if( PyArg_ParseTuple(args, ":toggle_mute") )
+      RETURN_BOOL(CEC_adapter->AudioToggleMute());
+   return NULL;
+}
+
 static PyObject * set_stream_path(PyObject * self, PyObject * args) {
    PyObject * arg;
 
@@ -373,6 +379,7 @@ static PyMethodDef CecMethods[] = {
    {"add_callback", add_callback, METH_VARARGS, "Add a callback"},
    {"volume_up",   volume_up,   METH_VARARGS, "Volume Up"},
    {"volume_down", volume_down, METH_VARARGS, "Volume Down"},
+   {"toggle_mute", toggle_mute, METH_VARARGS, "Toggle Mute"},
    {"set_stream_path", set_stream_path, METH_VARARGS, "Set HDMI stream path"},
    {"set_physical_addr", set_physical_addr, METH_VARARGS,
       "Set HDMI physical address"},
