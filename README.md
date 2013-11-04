@@ -62,6 +62,7 @@ cec.remove_callback(event, handler)  # not implemented yet
 devices = cec.list_devices()
 
 class Device:
+   __init__(id)
    is_on()
    power_on()
    standby()
@@ -81,7 +82,7 @@ cec.set_inactive_source()  # not implemented yet
 
 cec.volume_up()
 cec.volume_down()
-# TODO: mute/unmute
+cec.toggle_mute()
 # TODO: audio status
 
 cec.set_physical_address(addr)
