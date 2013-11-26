@@ -5,7 +5,7 @@
 ## Installing:
 
 ### Install dependencies
-To build python-cec, you need the latest version (2.1.0 or later) of the libcec development libraries:
+To build python-cec, you need version 1.6.1 or later of the libcec development libraries:
 
 On Gentoo:
 ```
@@ -17,12 +17,11 @@ On OS X:
 brew install libcec
 ```
 
-On Ubuntu and other Linux distributions, download and install the latest libcec from source. See the [libCEC README](https://github.com/Pulse-Eight/libcec/blob/master/README) for instructions on how to do this.
-
-On Ubuntu, it is recommended that you remove the binary libcec packages if they are installed through apt-get.
+Ubuntu:
 ```
-sudo apt-get remove libcec1
+sudo apt-get install libcec-dev build-essential python-dev
 ```
+Note: because Ubuntu ships an older version of libcec that lacks the ToggleMute function, that function will also be missing in python-cec
 
 ### Checkout, build and install
 
