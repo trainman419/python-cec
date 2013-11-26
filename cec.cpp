@@ -82,7 +82,7 @@ int parse_physical_addr(char * addr) {
 
 #define RETURN_BOOL(arg) do { PyObject * ret = (arg)?Py_True:Py_False; Py_INCREF(ret); return ret; } while(0)
 
-int parse_test() {
+void parse_test() {
    assert(parse_physical_addr("0.0.0.0") == 0);
    assert(parse_physical_addr("F.0.0.0") == 0xF000);
    assert(parse_physical_addr("0.F.0.0") == 0x0F00);
@@ -140,20 +140,20 @@ CallbackList * open_callbacks; // TODO: remove/update
 ICECAdapter * CEC_adapter;
 PyObject * Device;
 
-std::list<cec_adapter_descriptor> get_adapters() {
-   std::list<cec_adapter_descriptor> res;
+std::list<cec_adapter> get_adapters() {
+   std::list<cec_adapter> res;
    // release the Global Interpreter lock
    Py_BEGIN_ALLOW_THREADS
    // get adapters
    int cec_count = 10;
-   cec_adapter_descriptor * dev_list = (cec_adapter_descriptor*)malloc(
-         cec_count * sizeof(cec_adapter_descriptor));
-   int count = CEC_adapter->DetectAdapters(dev_list, cec_count);
+   cec_adapter * dev_list = (cec_adapter*)malloc(
+         cec_count * sizeof(cec_adapter));
+   int count = CEC_adapter->FindAdapters(dev_list, cec_count);
    if( count > cec_count ) {
       cec_count = count;
-      dev_list = (cec_adapter_descriptor*)realloc(dev_list, 
-         cec_count * sizeof(cec_adapter_descriptor));
-      count = CEC_adapter->DetectAdapters(dev_list, cec_count);
+      dev_list = (cec_adapter*)realloc(dev_list, 
+         cec_count * sizeof(cec_adapter));
+      count = CEC_adapter->FindAdapters(dev_list, cec_count);
       count = std::min(count, cec_count);
    }
 
@@ -171,17 +171,17 @@ static PyObject * list_adapters(PyObject * self, PyObject * args) {
    PyObject * result = NULL;
 
    if( PyArg_ParseTuple(args, ":list_adapters") ) {
-      std::list<cec_adapter_descriptor> dev_list = get_adapters();
+      std::list<cec_adapter> dev_list = get_adapters();
       // set up our result list
       result = PyList_New(0);
 
       // populate our result list
-      std::list<cec_adapter_descriptor>::const_iterator itr;
+      std::list<cec_adapter>::const_iterator itr;
       for( itr = dev_list.begin(); itr != dev_list.end(); itr++ ) {
-         PyList_Append(result, Py_BuildValue("s", itr->strComName));
+         PyList_Append(result, Py_BuildValue("s", itr->comm));
          /* Convert all of the fields 
          PyList_Append(result, Py_BuildValue("sshhhhii", 
-                  itr->strComName,
+                  itr->comm,
                   itr->strComPath,
                   itr->iVendorId,
                   itr->iProductId,
@@ -203,9 +203,9 @@ static PyObject * init(PyObject * self, PyObject * args) {
 
    if( PyArg_ParseTuple(args, "|s:init", &dev) ) {
       if( !dev ) {
-         std::list<cec_adapter_descriptor> devs = get_adapters();
+         std::list<cec_adapter> devs = get_adapters();
          if( devs.size() > 0 ) {
-            dev = devs.front().strComName;
+            dev = devs.front().comm;
          } else {
             PyErr_SetString(PyExc_Exception, "No default adapter found");
          }
@@ -292,11 +292,13 @@ static PyObject * volume_down(PyObject * self, PyObject * args) {
    return NULL;
 }
 
+#if CEC_LIB_VERSION_MAJOR > 1
 static PyObject * toggle_mute(PyObject * self, PyObject * args) {
    if( PyArg_ParseTuple(args, ":toggle_mute") )
       RETURN_BOOL(CEC_adapter->AudioToggleMute());
    return NULL;
 }
+#endif
 
 static PyObject * set_stream_path(PyObject * self, PyObject * args) {
    PyObject * arg;
@@ -397,7 +399,9 @@ static PyMethodDef CecMethods[] = {
    {"add_callback", add_callback, METH_VARARGS, "Add a callback"},
    {"volume_up",   volume_up,   METH_VARARGS, "Volume Up"},
    {"volume_down", volume_down, METH_VARARGS, "Volume Down"},
+#if CEC_LIB_VERSION_MAJOR > 1
    {"toggle_mute", toggle_mute, METH_VARARGS, "Toggle Mute"},
+#endif
    {"set_stream_path", set_stream_path, METH_VARARGS, "Set HDMI stream path"},
    {"set_physical_addr", set_physical_addr, METH_VARARGS,
       "Set HDMI physical address"},
@@ -422,14 +426,16 @@ PyMODINIT_FUNC initcec(void) {
    CEC_config->Clear();
 
    snprintf(CEC_config->strDeviceName, 13, "python-cec");
-   CEC_config->clientVersion = CEC_CLIENT_VERSION_CURRENT;
+   CEC_config->clientVersion = CEC_CLIENT_VERSION_1_6_0;
    CEC_config->bActivateSource = 0;
    CEC_config->deviceTypes.Add(CEC_DEVICE_TYPE_RECORDING_DEVICE);
 
 
    //  libcec callbacks
    CEC_callbacks = new ICECCallbacks();
+#if CEC_LIB_VERSION_MAJOR > 1 || ( CEC_LIB_VERSION_MAJOR == 1 && CEC_LIB_VERSION_MINOR >= 7 )
    CEC_callbacks->Clear();
+#endif
 
    CEC_config->callbacks = CEC_callbacks;
 
@@ -440,7 +446,9 @@ PyMODINIT_FUNC initcec(void) {
       return;
    }
 
+#if CEC_LIB_VERSION_MAJOR > 1 || ( CEC_LIB_VERSION_MAJOR == 1 && CEC_LIB_VERSION_MINOR >= 8 )
    CEC_adapter->InitVideoStandalone();
+#endif
 
    // set up python module
    PyTypeObject * dev = DeviceTypeInit(CEC_adapter);

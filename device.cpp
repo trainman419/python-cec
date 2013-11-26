@@ -59,6 +59,7 @@ static PyObject * Device_getLanguage(Device * self, void * closure) {
    return self->lang;
 }
 
+#pragma GCC diagnostic ignored "-Wwrite-strings"
 static PyGetSetDef Device_getset[] = {
    {"address", (getter)Device_getAddr, (setter)NULL,
       "Logical Address"},
@@ -88,6 +89,7 @@ static PyObject * Device_is_on(Device * self) {
          ret = Py_False;
          break;
       case CEC_POWER_STATUS_UNKNOWN:
+      default:
          PyErr_SetString(PyExc_IOError, "Power status not found");
          return NULL;
    }
