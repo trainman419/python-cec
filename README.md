@@ -5,21 +5,23 @@
 ## Installing:
 
 ### Install dependencies
-To build python-cec, you need the libcec development libraries:
+To build python-cec, you need the latest version (2.1.0 or later) of the libcec development libraries:
 
 On Gentoo:
 ```
 sudo emerge libcec
 ```
 
-On Ubuntu:
-```
-sudo apt-get install libcec-dev
-```
-
 On OS X:
 ```
 brew install libcec
+```
+
+On Ubuntu and other Linux distributions, download and install the latest libcec from source. See the [libCEC README](https://github.com/Pulse-Eight/libcec/blob/master/README) for instructions on how to do this.
+
+On Ubuntu, it is recommended that you remove the binary libcec packages if they are installed through apt-get.
+```
+sudo apt-get remove libcec1
 ```
 
 ### Checkout, build and install
