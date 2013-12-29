@@ -23,6 +23,7 @@
  */
 
 #include "device.h"
+#include <inttypes.h>
 
 using namespace CEC;
 
@@ -176,7 +177,7 @@ static PyObject * Device_new(PyTypeObject * type, PyObject * args,
       self->addr = (cec_logical_address)addr;
       uint64_t vendor = adapter->GetDeviceVendorId(self->addr);
       char vendor_str[7];
-      snprintf(vendor_str, 7, "%06lX", vendor);
+      snprintf(vendor_str, 7, "%06" PRIX64, vendor);
       if( ! (self->vendorId = Py_BuildValue("s", vendor_str)) ) return NULL;
 
       uint16_t physicalAddress = adapter->GetDevicePhysicalAddress(self->addr);
