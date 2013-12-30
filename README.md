@@ -26,7 +26,7 @@ Note: because Ubuntu ships an older version of libcec that lacks the ToggleMute 
 ### Checkout, build and install
 
 ```
-git clone https://github.com/trainman419/python-cec.git
+git clone -b 0.1.1 https://github.com/trainman419/python-cec.git
 cd python-cec
 python setup.py install
 ```
