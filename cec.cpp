@@ -69,6 +69,15 @@ using namespace CEC;
 //    - source activated
 //
 
+#define EVENT_LOG           0x0001
+#define EVENT_KEYPRESS      0x0002
+#define EVENT_COMMAND       0x0004
+#define EVENT_CONFIG_CHANGE 0x0008
+#define EVENT_ALERT         0x0010
+#define EVENT_MENU_CHANGED  0x0020
+#define EVENT_ACTIVATED     0x0040
+#define EVENT_ALL           0xFFFF
+
 int parse_physical_addr(char * addr) {
    int a, b, c, d;
    if( sscanf(addr, "%x.%x.%x.%x", &a, &b, &c, &d) == 4 ) {
@@ -266,18 +275,46 @@ static PyObject * list_devices(PyObject * self, PyObject * args) {
 
 static PyObject * add_callback(PyObject * self, PyObject * args) {
    PyObject * result = NULL;
-   PyObject * temp;
+   long int event;
+   PyObject * callback;
 
-   if( PyArg_ParseTuple(args, "O:add_callback", &temp) ) {
-      if( !PyCallable_Check(temp)) {
+   if( PyArg_ParseTuple(args, "iO:add_callback", &event, &callback) ) {
+      // TODO: check that event is one of the allowed events
+      //  event should probably be a bitmask
+      if( false ) {
+         PyErr_SetString(PyExc_TypeError, "Invalid event for callback");
+         return NULL;
+      }
+      if( !PyCallable_Check(callback)) {
          PyErr_SetString(PyExc_TypeError, "parameter must be callable");
          return NULL;
       }
-      open_callbacks->add(temp);
+
+      if( event & EVENT_LOG ) {
+      }
+      if( event & EVENT_KEYPRESS ) {
+      }
+      if( event & EVENT_COMMAND ) {
+      }
+      if( event & EVENT_CONFIG_CHANGE ) {
+      }
+      if( event & EVENT_ALERT ) {
+      }
+      if( event & EVENT_MENU_CHANGED ) {
+      }
+      if( event & EVENT_ACTIVATED ) {
+      }
+      open_callbacks->add(callback);
       Py_INCREF(Py_None);
       result = Py_None;
    }
    return result;
+}
+
+static PyObject * remove_callback(PyObject * sefl, PyObject * args) {
+  if( PyArg_ParseTuple(args, "O:remove_callback") ) {
+  }
+  return NULL;
 }
 
 static PyObject * volume_up(PyObject * self, PyObject * args) {
@@ -397,6 +434,7 @@ static PyMethodDef CecMethods[] = {
    {"init", init, METH_VARARGS, "Open an adapter"},
    {"list_devices", list_devices, METH_VARARGS, "List devices"},
    {"add_callback", add_callback, METH_VARARGS, "Add a callback"},
+   {"remove_callback", remove_callback, METH_VARARGS, "Remove a callback"},
    {"volume_up",   volume_up,   METH_VARARGS, "Volume Up"},
    {"volume_down", volume_down, METH_VARARGS, "Volume Down"},
 #if CEC_LIB_VERSION_MAJOR > 1
@@ -455,10 +493,19 @@ PyMODINIT_FUNC initcec(void) {
    Device = (PyObject*)dev;
    if(PyType_Ready(dev) < 0 ) return;
 
+   // TODO: add constants for event types
    PyObject * m = Py_InitModule("cec", CecMethods);
 
    if( m == NULL ) return;
 
    Py_INCREF(dev);
    PyModule_AddObject(m, "Device", (PyObject*)dev);
+   PyModule_AddIntMacro(m, EVENT_LOG);
+   PyModule_AddIntMacro(m, EVENT_KEYPRESS);
+   PyModule_AddIntMacro(m, EVENT_COMMAND);
+   PyModule_AddIntMacro(m, EVENT_CONFIG_CHANGE);
+   PyModule_AddIntMacro(m, EVENT_ALERT);
+   PyModule_AddIntMacro(m, EVENT_MENU_CHANGED);
+   PyModule_AddIntMacro(m, EVENT_ACTIVATED);
+   PyModule_AddIntMacro(m, EVENT_ALL);
 }
