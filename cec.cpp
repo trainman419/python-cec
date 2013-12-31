@@ -76,7 +76,8 @@ using namespace CEC;
 #define EVENT_ALERT         0x0010
 #define EVENT_MENU_CHANGED  0x0020
 #define EVENT_ACTIVATED     0x0040
-#define EVENT_ALL           0xFFFF
+#define EVENT_VALID         0x007F
+#define EVENT_ALL           0x007F
 
 int parse_physical_addr(char * addr) {
    int a, b, c, d;
@@ -273,16 +274,33 @@ static PyObject * list_devices(PyObject * self, PyObject * args) {
    return result;
 }
 
+class Callback {
+   public:
+      long int event;
+      PyObject * cb;
+
+      Callback(long int e, PyObject * c) : event(e), cb(c) {
+         Py_INCREF(cb);
+      }
+      ~Callback() {
+         Py_DECREF(cb);
+      }
+};
+
+
+typedef std::list<Callback> cb_list;
+cb_list callbacks;
+
 static PyObject * add_callback(PyObject * self, PyObject * args) {
    PyObject * result = NULL;
-   long int event;
    PyObject * callback;
+   long int events = EVENT_ALL; // default to all events
 
-   if( PyArg_ParseTuple(args, "iO:add_callback", &event, &callback) ) {
+   if( PyArg_ParseTuple(args, "O|i:add_callback", &callback, &events) ) {
       // TODO: check that event is one of the allowed events
       //  event should probably be a bitmask
-      if( false ) {
-         PyErr_SetString(PyExc_TypeError, "Invalid event for callback");
+      if( events & ~(EVENT_VALID) ) {
+         PyErr_SetString(PyExc_TypeError, "Invalid event(s) for callback");
          return NULL;
       }
       if( !PyCallable_Check(callback)) {
@@ -290,21 +308,10 @@ static PyObject * add_callback(PyObject * self, PyObject * args) {
          return NULL;
       }
 
-      if( event & EVENT_LOG ) {
-      }
-      if( event & EVENT_KEYPRESS ) {
-      }
-      if( event & EVENT_COMMAND ) {
-      }
-      if( event & EVENT_CONFIG_CHANGE ) {
-      }
-      if( event & EVENT_ALERT ) {
-      }
-      if( event & EVENT_MENU_CHANGED ) {
-      }
-      if( event & EVENT_ACTIVATED ) {
-      }
-      open_callbacks->add(callback);
+      Callback new_cb(events, callback);
+
+      callbacks.push_back(new_cb);
+
       Py_INCREF(Py_None);
       result = Py_None;
    }
@@ -312,9 +319,48 @@ static PyObject * add_callback(PyObject * self, PyObject * args) {
 }
 
 static PyObject * remove_callback(PyObject * sefl, PyObject * args) {
-  if( PyArg_ParseTuple(args, "O:remove_callback") ) {
+  PyObject * callback;
+  long int events = EVENT_ALL; // default to all events
+
+  if( PyArg_ParseTuple(args, "O|i:remove_callback", &callback, &events) ) {
+     for( cb_list::iterator itr = callbacks.begin(); 
+           itr != callbacks.end();
+           ++itr ) {
+        if( itr->cb == callback ) {
+           // clear out the given events for this callback
+           itr->event &= ~(events);
+           if( itr->event == 0 ) {
+              // if this callback has no events, remove it
+              itr = callbacks.erase(itr);
+           }
+        }
+     }
+     
   }
   return NULL;
+}
+
+static PyObject * trigger_event(long int event, PyObject * args) {
+   assert(event & EVENT_ALL);
+   Py_INCREF(Py_None);
+   PyObject * result = Py_None;
+
+   for( cb_list::const_iterator itr = callbacks.begin();
+         itr != callbacks.end();
+         ++itr ) {
+      if( itr->event & event ) {
+         // see also: PyObject_CallFunction(...) which can take C args
+         PyObject * temp = PyObject_CallObject(itr->cb, args);
+         if( temp ) {
+            Py_DECREF(temp);
+         } else {
+            Py_DECREF(Py_None);
+            return NULL;
+         }
+      }
+   }
+
+   return result;
 }
 
 static PyObject * volume_up(PyObject * self, PyObject * args) {
@@ -454,6 +500,76 @@ static PyMethodDef CecMethods[] = {
 libcec_configuration * CEC_config;
 ICECCallbacks * CEC_callbacks; 
 
+int log_cb(void * self, const cec_log_message message) {
+   PyObject * args = Py_BuildValue("(iils)", EVENT_LOG, 
+         message.level,
+         message.time,
+         message.message);
+   trigger_event(EVENT_LOG, args);
+   Py_DECREF(args);
+   return 1;
+}
+
+int keypress_cb(void * self, const cec_keypress key) {
+   PyObject * args = Py_BuildValue("(iBI)", EVENT_KEYPRESS,
+         key.keycode,
+         key.duration);
+   trigger_event(EVENT_KEYPRESS, args);
+   Py_DECREF(args);
+   return 1;
+}
+
+int command_cb(void * self, const cec_command command) {
+   // TODO: figure out how to pass these parameters
+   //  we'll probably have to build an Object for this
+   PyObject * args = Py_BuildValue("(i)", EVENT_COMMAND);
+   trigger_event(EVENT_COMMAND, args);
+   Py_DECREF(args);
+   return 1;
+}
+
+int config_cb(void * self, const libcec_configuration) {
+   // TODO: figure out how to pass these as parameters
+   // yeah... right. 
+   //  we'll probably have to come up with some functions for converting the 
+   //  libcec_configuration class into a python Object
+   //  this will probably be _lots_ of work and should probably wait until
+   //  a later release, or when it becomes necessary.
+   PyObject * args = Py_BuildValue("(i)", EVENT_CONFIG_CHANGE);
+   trigger_event(EVENT_CONFIG_CHANGE, args);
+   Py_DECREF(args);
+   return 1;
+}
+
+int alert_cb(void * self, const libcec_alert alert, const libcec_parameter p) {
+   PyObject * param = Py_None;
+   if( p.paramType == CEC_PARAMETER_TYPE_STRING ) {
+      param = Py_BuildValue("s", p.paramData);
+   } else {
+      Py_INCREF(param);
+   }
+   PyObject * args = Py_BuildValue("(iiN)", EVENT_ALERT, alert, param);
+   trigger_event(EVENT_ALERT, args);
+   Py_DECREF(args);
+   return 1;
+}
+
+int menu_cb(void * self, const cec_menu_state menu) {
+   PyObject * args = Py_BuildValue("(ii)", EVENT_MENU_CHANGED, menu);
+   trigger_event(EVENT_MENU_CHANGED, args);
+   Py_DECREF(args);
+   return 1;
+}
+
+void activated_cb(void * self, const cec_logical_address, const uint8_t state) {
+   char * address = ""; // TODO: convert cec_logical_address to string
+   PyObject * active = (state == 1) ? Py_True : Py_False;
+   PyObject * args = Py_BuildValue("(iOs)", EVENT_ACTIVATED, active, address);
+   trigger_event(EVENT_ACTIVATED, args);
+   Py_DECREF(args);
+   return;
+}
+
 PyMODINIT_FUNC initcec(void) {
    // set up callback data structures
    open_callbacks = new CallbackList();
@@ -474,6 +590,13 @@ PyMODINIT_FUNC initcec(void) {
 #if CEC_LIB_VERSION_MAJOR > 1 || ( CEC_LIB_VERSION_MAJOR == 1 && CEC_LIB_VERSION_MINOR >= 7 )
    CEC_callbacks->Clear();
 #endif
+   CEC_callbacks->CBCecLogMessage = log_cb;
+   CEC_callbacks->CBCecKeyPress = keypress_cb;
+   CEC_callbacks->CBCecCommand = command_cb;
+   CEC_callbacks->CBCecConfigurationChanged = config_cb;
+   CEC_callbacks->CBCecAlert = alert_cb;
+   CEC_callbacks->CBCecMenuStateChanged = menu_cb;
+   CEC_callbacks->CBCecSourceActivated = activated_cb;
 
    CEC_config->callbacks = CEC_callbacks;
 
@@ -508,4 +631,20 @@ PyMODINIT_FUNC initcec(void) {
    PyModule_AddIntMacro(m, EVENT_MENU_CHANGED);
    PyModule_AddIntMacro(m, EVENT_ACTIVATED);
    PyModule_AddIntMacro(m, EVENT_ALL);
+   PyModule_AddIntConstant(m, "CEC_ALERT_SERVICE_DEVICE",
+         CEC_ALERT_SERVICE_DEVICE);
+   PyModule_AddIntConstant(m, "CEC_ALERT_CONNECTION_LOST",
+         CEC_ALERT_CONNECTION_LOST);
+   PyModule_AddIntConstant(m, "CEC_ALERT_PERMISSION_ERROR",
+         CEC_ALERT_PERMISSION_ERROR);
+   PyModule_AddIntConstant(m, "CEC_ALERT_PORT_BUSY",
+         CEC_ALERT_PORT_BUSY);
+   PyModule_AddIntConstant(m, "CEC_ALERT_PHYSICAL_ADDRESS_ERROR",
+         CEC_ALERT_PHYSICAL_ADDRESS_ERROR);
+   PyModule_AddIntConstant(m, "CEC_ALERT_TV_POLL_FAILED",
+         CEC_ALERT_TV_POLL_FAILED);
+   PyModule_AddIntConstant(m, "CEC_MENU_STATE_ACTIVATED",
+         CEC_MENU_STATE_ACTIVATED);
+   PyModule_AddIntConstant(m, "CEC_MENU_STATE_DEACTIVATED",
+         CEC_MENU_STATE_DEACTIVATED);
 }
