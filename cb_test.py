@@ -5,10 +5,12 @@ from __future__ import print_function
 from time import sleep
 import cec
 
+print("Loaded CEC from", cec.__file__)
+
 def cb(event, data):
     print("Got event", event, "with data", data)
 
-cec.add_callback(cec.EVENT_ALL, cb)
+cec.add_callback(cb, cec.EVENT_ALL)
 print("Callback added")
 sleep(2)
 
