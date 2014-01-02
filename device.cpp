@@ -22,10 +22,10 @@
  * Author: Austin Hendrix <namniart@gmail.com>
  */
 
-#include "device.h"
-
 // request the std format macros
 #define __STDC_FORMAT_MACROS
+
+#include "device.h"
 #include <inttypes.h>
 
 using namespace CEC;
