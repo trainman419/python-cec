@@ -7,8 +7,8 @@ import cec
 
 print("Loaded CEC from", cec.__file__)
 
-def cb(event, data):
-    print("Got event", event, "with data", data)
+def cb(event, *args):
+    print("Got event", event, "with data", args)
 
 cec.add_callback(cb, cec.EVENT_ALL)
 print("Callback added")

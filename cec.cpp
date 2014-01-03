@@ -79,6 +79,14 @@ using namespace CEC;
 #define EVENT_VALID         0x007F
 #define EVENT_ALL           0x007F
 
+#define DEBUG 1
+
+#ifdef DEBUG
+# define debug(...) printf("CEC DEBUG: " __VA_ARGS__)
+#else
+# define debug(...)
+#endif
+
 int parse_physical_addr(char * addr) {
    int a, b, c, d;
    if( sscanf(addr, "%x.%x.%x.%x", &a, &b, &c, &d) == 4 ) {
@@ -310,6 +318,7 @@ static PyObject * add_callback(PyObject * self, PyObject * args) {
 
       Callback new_cb(events, callback);
 
+      debug("Adding callback for event %d\n", events);
       callbacks.push_back(new_cb);
 
       Py_INCREF(Py_None);
@@ -318,7 +327,7 @@ static PyObject * add_callback(PyObject * self, PyObject * args) {
    return result;
 }
 
-static PyObject * remove_callback(PyObject * sefl, PyObject * args) {
+static PyObject * remove_callback(PyObject * self, PyObject * args) {
   PyObject * callback;
   long int events = EVENT_ALL; // default to all events
 
@@ -345,19 +354,27 @@ static PyObject * trigger_event(long int event, PyObject * args) {
    Py_INCREF(Py_None);
    PyObject * result = Py_None;
 
+   debug("Triggering event %ld\n", event);
+
+   int i=0;
    for( cb_list::const_iterator itr = callbacks.begin();
          itr != callbacks.end();
          ++itr ) {
+      debug("Checking callback %d with events %ld\n", i, itr->event);
       if( itr->event & event ) {
+         debug("Calling callback %d\n", i);
          // see also: PyObject_CallFunction(...) which can take C args
          PyObject * temp = PyObject_CallObject(itr->cb, args);
          if( temp ) {
+            debug("Callback succeeded\n");
             Py_DECREF(temp);
          } else {
+            debug("Callback failed\n");
             Py_DECREF(Py_None);
             return NULL;
          }
       }
+      i++;
    }
 
    return result;
@@ -501,34 +518,57 @@ libcec_configuration * CEC_config;
 ICECCallbacks * CEC_callbacks; 
 
 int log_cb(void * self, const cec_log_message message) {
+   debug("got log callback\n");
+   PyGILState_STATE gstate;
+   gstate = PyGILState_Ensure();
+   debug("GIL acquired\n");
+   debug("Message level %d\n", message.level);
+   debug("Message time %d\n", message.time);
+   debug("Message content %s\n", message.message);
+   int level = message.level;
+   long int time = message.time;
    PyObject * args = Py_BuildValue("(iils)", EVENT_LOG, 
-         message.level,
-         message.time,
+         level,
+         time,
          message.message);
+   debug("argument PyObject created\n");
    trigger_event(EVENT_LOG, args);
+   debug("Event trigger done\n");
    Py_DECREF(args);
+   PyGILState_Release(gstate);
    return 1;
 }
 
 int keypress_cb(void * self, const cec_keypress key) {
+   debug("got keypress callback\n");
+   PyGILState_STATE gstate;
+   gstate = PyGILState_Ensure();
    PyObject * args = Py_BuildValue("(iBI)", EVENT_KEYPRESS,
          key.keycode,
          key.duration);
    trigger_event(EVENT_KEYPRESS, args);
    Py_DECREF(args);
+   PyGILState_Release(gstate);
    return 1;
 }
 
 int command_cb(void * self, const cec_command command) {
+   debug("got command callback\n");
+   PyGILState_STATE gstate;
+   gstate = PyGILState_Ensure();
    // TODO: figure out how to pass these parameters
    //  we'll probably have to build an Object for this
    PyObject * args = Py_BuildValue("(i)", EVENT_COMMAND);
    trigger_event(EVENT_COMMAND, args);
    Py_DECREF(args);
+   PyGILState_Release(gstate);
    return 1;
 }
 
 int config_cb(void * self, const libcec_configuration) {
+   debug("got config callback\n");
+   PyGILState_STATE gstate;
+   gstate = PyGILState_Ensure();
    // TODO: figure out how to pass these as parameters
    // yeah... right. 
    //  we'll probably have to come up with some functions for converting the 
@@ -538,10 +578,14 @@ int config_cb(void * self, const libcec_configuration) {
    PyObject * args = Py_BuildValue("(i)", EVENT_CONFIG_CHANGE);
    trigger_event(EVENT_CONFIG_CHANGE, args);
    Py_DECREF(args);
+   PyGILState_Release(gstate);
    return 1;
 }
 
 int alert_cb(void * self, const libcec_alert alert, const libcec_parameter p) {
+   debug("got alert callback\n");
+   PyGILState_STATE gstate;
+   gstate = PyGILState_Ensure();
    PyObject * param = Py_None;
    if( p.paramType == CEC_PARAMETER_TYPE_STRING ) {
       param = Py_BuildValue("s", p.paramData);
@@ -551,22 +595,31 @@ int alert_cb(void * self, const libcec_alert alert, const libcec_parameter p) {
    PyObject * args = Py_BuildValue("(iiN)", EVENT_ALERT, alert, param);
    trigger_event(EVENT_ALERT, args);
    Py_DECREF(args);
+   PyGILState_Release(gstate);
    return 1;
 }
 
 int menu_cb(void * self, const cec_menu_state menu) {
+   debug("got menu callback\n");
+   PyGILState_STATE gstate;
+   gstate = PyGILState_Ensure();
    PyObject * args = Py_BuildValue("(ii)", EVENT_MENU_CHANGED, menu);
    trigger_event(EVENT_MENU_CHANGED, args);
    Py_DECREF(args);
+   PyGILState_Release(gstate);
    return 1;
 }
 
 void activated_cb(void * self, const cec_logical_address, const uint8_t state) {
+   debug("got activated callback\n");
+   PyGILState_STATE gstate;
+   gstate = PyGILState_Ensure();
    char * address = ""; // TODO: convert cec_logical_address to string
    PyObject * active = (state == 1) ? Py_True : Py_False;
    PyObject * args = Py_BuildValue("(iOs)", EVENT_ACTIVATED, active, address);
    trigger_event(EVENT_ACTIVATED, args);
    Py_DECREF(args);
+   PyGILState_Release(gstate);
    return;
 }
 
