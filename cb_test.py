@@ -14,7 +14,14 @@ cec.add_callback(cb, cec.EVENT_ALL)
 print("Callback added")
 sleep(2)
 
+if cec.HAVE_CEC_ADAPTER_DESCRIPTOR:
+    print("CEC has cec_adapter_descriptor");
+else:
+    print("CEC does not have cec_adapter_descriptor");
+
 cec.init()
 print("CEC initialized. Waiting 10 seconds")
 
 sleep(10)
+
+print("SUCCESS!")
