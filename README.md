@@ -66,9 +66,21 @@ cec.init(adapter=cec.DEFAULT)
 
 cec.close()  # not implemented yet
 
-cec.add_callback(event, handler)  # not implemented yet
+cec.add_callback(handler, events)
+# the list of events is specified as a bitmask of the possible events:
+cec.EVENT_LOG
+cec.EVENT_KEYPRESS
+cec.EVENT_COMMAND # not implemented yet
+cec.EVENT_CONFIG_CHANGE # not implemented yet
+cec.EVENT_ALERT
+cec.EVENT_MENU_CHANGED
+cec.EVENT_ACTIVATED
+cec.EVENT_ALL
+# the callback will receive a varying number and type of arguments that are
+# specific to the event. Contact me if you're interested in using specific
+# callbacks
 
-cec.remove_callback(event, handler)  # not implemented yet
+cec.remove_callback(handler, events)
 
 devices = cec.list_devices()
 

@@ -10,7 +10,12 @@ print("Loaded CEC from", cec.__file__)
 def cb(event, *args):
     print("Got event", event, "with data", args)
 
-cec.add_callback(cb, cec.EVENT_ALL)
+# arguments: iils
+def log_cb(event, level, time, message):
+    print("CEC Log message:", message)
+
+cec.add_callback(cb, cec.EVENT_ALL & ~cec.EVENT_LOG)
+cec.add_callback(log_cb, cec.EVENT_LOG)
 print("Callback added")
 sleep(2)
 
@@ -22,6 +27,6 @@ else:
 cec.init()
 print("CEC initialized. Waiting 10 seconds")
 
-sleep(10)
+sleep(30)
 
 print("SUCCESS!")
