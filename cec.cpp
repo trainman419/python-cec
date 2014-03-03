@@ -516,22 +516,15 @@ int log_cb(void * self, const cec_log_message message) {
    debug("got log callback\n");
    PyGILState_STATE gstate;
    gstate = PyGILState_Ensure();
-   //debug("GIL acquired\n");
-   debug("Message level %d\n", message.level);
-   debug("Message time %" PRId64 "\n", message.time);
-   debug("Message content %s\n", message.message);
    int level = message.level;
    long int time = message.time;
    PyObject * args = Py_BuildValue("(iils)", EVENT_LOG, 
          level,
          time,
          message.message);
-   //debug("argument PyObject created\n");
    trigger_event(EVENT_LOG, args);
-   //debug("Event trigger done\n");
    Py_DECREF(args);
    PyGILState_Release(gstate);
-   //debug("GIL released\n");
    return 1;
 }
 
@@ -555,7 +548,8 @@ int command_cb(void * self, const cec_command command) {
    // TODO: figure out how to pass these parameters
    //  we'll probably have to build an Object for this
    PyObject * args = Py_BuildValue("(i)", EVENT_COMMAND);
-   trigger_event(EVENT_COMMAND, args);
+   // don't bother triggering an event until we can actually pass arguments
+   //trigger_event(EVENT_COMMAND, args);
    Py_DECREF(args);
    PyGILState_Release(gstate);
    return 1;
@@ -572,7 +566,8 @@ int config_cb(void * self, const libcec_configuration) {
    //  this will probably be _lots_ of work and should probably wait until
    //  a later release, or when it becomes necessary.
    PyObject * args = Py_BuildValue("(i)", EVENT_CONFIG_CHANGE);
-   trigger_event(EVENT_CONFIG_CHANGE, args);
+   // don't bother triggering an event until we can actually pass arguments
+   //trigger_event(EVENT_CONFIG_CHANGE, args);
    Py_DECREF(args);
    PyGILState_Release(gstate);
    return 1;
@@ -606,13 +601,14 @@ int menu_cb(void * self, const cec_menu_state menu) {
    return 1;
 }
 
-void activated_cb(void * self, const cec_logical_address, const uint8_t state) {
+void activated_cb(void * self, const cec_logical_address logical_address,
+      const uint8_t state) {
    debug("got activated callback\n");
    PyGILState_STATE gstate;
    gstate = PyGILState_Ensure();
-   char * address = ""; // TODO: convert cec_logical_address to string
    PyObject * active = (state == 1) ? Py_True : Py_False;
-   PyObject * args = Py_BuildValue("(iOs)", EVENT_ACTIVATED, active, address);
+   PyObject * args = Py_BuildValue("(iOi)", EVENT_ACTIVATED, active,
+      logical_address);
    trigger_event(EVENT_ACTIVATED, args);
    Py_DECREF(args);
    PyGILState_Release(gstate);
