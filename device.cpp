@@ -81,7 +81,10 @@ static PyGetSetDef Device_getset[] = {
 };
 
 static PyObject * Device_is_on(Device * self) {
-   cec_power_status power = adapter->GetDevicePowerStatus(self->addr);
+   cec_power_status power;
+   Py_BEGIN_ALLOW_THREADS
+   power = adapter->GetDevicePowerStatus(self->addr);
+   Py_END_ALLOW_THREADS
    PyObject * ret;
    switch(power) {
       case CEC_POWER_STATUS_ON:
@@ -102,7 +105,11 @@ static PyObject * Device_is_on(Device * self) {
 }
 
 static PyObject * Device_power_on(Device * self) {
-   if( adapter->PowerOnDevices(self->addr) ) {
+   bool success;
+   Py_BEGIN_ALLOW_THREADS
+   success = adapter->PowerOnDevices(self->addr);
+   Py_END_ALLOW_THREADS
+   if( success ) {
       Py_RETURN_TRUE;
    } else {
       Py_RETURN_FALSE;
@@ -110,7 +117,11 @@ static PyObject * Device_power_on(Device * self) {
 }
 
 static PyObject * Device_standby(Device * self) {
-   if( adapter->StandbyDevices(self->addr) ) {
+   bool success;
+   Py_BEGIN_ALLOW_THREADS
+   success = adapter->StandbyDevices(self->addr);
+   Py_END_ALLOW_THREADS
+   if( success ) {
       Py_RETURN_TRUE;
    } else {
       Py_RETURN_FALSE;
@@ -121,13 +132,17 @@ static PyObject * Device_av_input(Device * self, PyObject * args) {
    unsigned char input;
    if( PyArg_ParseTuple(args, "b:set_av_input", &input) ) {
       cec_command data;
+      bool success;
+      Py_BEGIN_ALLOW_THREADS
       data.initiator = adapter->GetLogicalAddresses().primary;
       data.destination = self->addr;
       data.opcode = CEC_OPCODE_USER_CONTROL_PRESSED;
       data.opcode_set = 1;
       data.PushBack(0x69);
       data.PushBack(input);
-      if( adapter->Transmit(data) ) {
+      success = adapter->Transmit(data);
+      Py_END_ALLOW_THREADS
+      if( success ) {
          Py_RETURN_TRUE;
       } else {
          Py_RETURN_FALSE;
@@ -141,13 +156,17 @@ static PyObject * Device_audio_input(Device * self, PyObject * args) {
    unsigned char input;
    if( PyArg_ParseTuple(args, "b:set_audio_input", &input) ) {
       cec_command data;
+      bool success;
+      Py_BEGIN_ALLOW_THREADS
       data.initiator = adapter->GetLogicalAddresses().primary;
       data.destination = self->addr;
       data.opcode = CEC_OPCODE_USER_CONTROL_PRESSED;
       data.opcode_set = 1;
       data.PushBack(0x6a);
       data.PushBack(input);
-      if( adapter->Transmit(data) ) {
+      success = adapter->Transmit(data);
+      Py_END_ALLOW_THREADS
+      if( success ) {
          Py_RETURN_TRUE;
       } else {
          Py_RETURN_FALSE;
@@ -178,22 +197,28 @@ static PyObject * Device_new(PyTypeObject * type, PyObject * args,
    self = (Device*)type->tp_alloc(type, 0);
    if( self != NULL ) {
       self->addr = (cec_logical_address)addr;
-      uint64_t vendor = adapter->GetDeviceVendorId(self->addr);
+      uint64_t vendor;
+      Py_BEGIN_ALLOW_THREADS
+      vendor = adapter->GetDeviceVendorId(self->addr);
+      Py_END_ALLOW_THREADS
       char vendor_str[7];
       snprintf(vendor_str, 7, "%06" PRIX64, vendor);
       if( ! (self->vendorId = Py_BuildValue("s", vendor_str)) ) return NULL;
 
-      uint16_t physicalAddress = adapter->GetDevicePhysicalAddress(self->addr);
       char strAddr[8];
+      Py_BEGIN_ALLOW_THREADS
+      uint16_t physicalAddress = adapter->GetDevicePhysicalAddress(self->addr);
       snprintf(strAddr, 8, "%x.%x.%x.%x", 
             (physicalAddress >> 12) & 0xF,
             (physicalAddress >> 8) & 0xF,
             (physicalAddress >> 4) & 0xF,
             physicalAddress & 0xF);
+      Py_END_ALLOW_THREADS
       self->physicalAddress = Py_BuildValue("s", strAddr);
 
-      cec_version ver = adapter->GetDeviceCecVersion(self->addr);
       const char * ver_str;
+      Py_BEGIN_ALLOW_THREADS
+      cec_version ver = adapter->GetDeviceCecVersion(self->addr);
       switch(ver) {
          case CEC_VERSION_1_2:
             ver_str = "1.2";
@@ -215,14 +240,20 @@ static PyObject * Device_new(PyTypeObject * type, PyObject * args,
             ver_str = "Unknown";
             break;
       }
+      Py_END_ALLOW_THREADS
 
       if( !(self->cecVersion = Py_BuildValue("s", ver_str)) ) return NULL;
 
-      cec_osd_name name = adapter->GetDeviceOSDName(self->addr);
+      cec_osd_name name;
+      Py_BEGIN_ALLOW_THREADS
+      name = adapter->GetDeviceOSDName(self->addr);
+      Py_END_ALLOW_THREADS
       if( !(self->osdName = Py_BuildValue("s", name.name)) ) return NULL;
 
       cec_menu_language lang;
+      Py_BEGIN_ALLOW_THREADS
       adapter->GetDeviceMenuLanguage(self->addr, &lang);
+      Py_END_ALLOW_THREADS
       if( !(self->lang = Py_BuildValue("s", lang.language)) ) return NULL;
    }
 

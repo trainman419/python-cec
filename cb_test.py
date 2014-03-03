@@ -24,9 +24,13 @@ if cec.HAVE_CEC_ADAPTER_DESCRIPTOR:
 else:
     print("CEC does not have cec_adapter_descriptor");
 
+print("Initializing CEC library")
 cec.init()
-print("CEC initialized. Waiting 10 seconds")
 
-sleep(30)
+print("Creating Device object for TV")
+tv = cec.Device(0)
+print("Turning on TV")
+tv.power_on()
+
 
 print("SUCCESS!")
