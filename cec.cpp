@@ -301,8 +301,7 @@ static PyObject * add_callback(PyObject * self, PyObject * args) {
    long int events = EVENT_ALL; // default to all events
 
    if( PyArg_ParseTuple(args, "O|i:add_callback", &callback, &events) ) {
-      // TODO: check that event is one of the allowed events
-      //  event should probably be a bitmask
+      // check that event is one of the allowed events
       if( events & ~(EVENT_VALID) ) {
          PyErr_SetString(PyExc_TypeError, "Invalid event(s) for callback");
          return NULL;
@@ -675,13 +674,14 @@ PyMODINIT_FUNC initcec(void) {
    Device = (PyObject*)dev;
    if(PyType_Ready(dev) < 0 ) return;
 
-   // TODO: add constants for event types
    PyObject * m = Py_InitModule("cec", CecMethods);
 
    if( m == NULL ) return;
 
    Py_INCREF(dev);
    PyModule_AddObject(m, "Device", (PyObject*)dev);
+
+   // constants for event types
    PyModule_AddIntMacro(m, EVENT_LOG);
    PyModule_AddIntMacro(m, EVENT_KEYPRESS);
    PyModule_AddIntMacro(m, EVENT_COMMAND);
@@ -690,6 +690,8 @@ PyMODINIT_FUNC initcec(void) {
    PyModule_AddIntMacro(m, EVENT_MENU_CHANGED);
    PyModule_AddIntMacro(m, EVENT_ACTIVATED);
    PyModule_AddIntMacro(m, EVENT_ALL);
+
+   // constants for alert types
    PyModule_AddIntConstant(m, "CEC_ALERT_SERVICE_DEVICE",
          CEC_ALERT_SERVICE_DEVICE);
    PyModule_AddIntConstant(m, "CEC_ALERT_CONNECTION_LOST",
@@ -702,9 +704,15 @@ PyMODINIT_FUNC initcec(void) {
          CEC_ALERT_PHYSICAL_ADDRESS_ERROR);
    PyModule_AddIntConstant(m, "CEC_ALERT_TV_POLL_FAILED",
          CEC_ALERT_TV_POLL_FAILED);
+
+   // constants for menu events
    PyModule_AddIntConstant(m, "CEC_MENU_STATE_ACTIVATED",
          CEC_MENU_STATE_ACTIVATED);
    PyModule_AddIntConstant(m, "CEC_MENU_STATE_DEACTIVATED",
          CEC_MENU_STATE_DEACTIVATED);
+
+   // expose whether or not we're using the new cec_adapter_descriptor API
+   // this should help debugging by exposing which version was detected and
+   // which adapter detection API was used at compile time
    PyModule_AddIntMacro(m, HAVE_CEC_ADAPTER_DESCRIPTOR);
 }
