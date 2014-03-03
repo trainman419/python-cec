@@ -87,6 +87,17 @@ using namespace CEC;
 # define debug(...)
 #endif
 
+// cec_adapter_descriptor and DetectAdapters were introduced in 2.1.0
+#if CEC_LIB_VERSION_MAJOR >= 2 && CEC_LIB_VERSION_MINOR >= 1
+#define CEC_ADAPTER_TYPE cec_adapter_descriptor
+#define CEC_FIND_ADAPTERS DetectAdapters
+#define HAVE_CEC_ADAPTER_DESCRIPTOR 1
+#else
+#define CEC_ADAPTER_TYPE cec_adapter
+#define CEC_FIND_ADAPTERS FindAdapters
+#define HAVE_CEC_ADAPTER_DESCRIPTOR 0
+#endif
+
 int parse_physical_addr(char * addr) {
    int a, b, c, d;
    if( sscanf(addr, "%x.%x.%x.%x", &a, &b, &c, &d) == 4 ) {
@@ -158,20 +169,20 @@ CallbackList * open_callbacks; // TODO: remove/update
 ICECAdapter * CEC_adapter;
 PyObject * Device;
 
-std::list<cec_adapter> get_adapters() {
-   std::list<cec_adapter> res;
+std::list<CEC_ADAPTER_TYPE> get_adapters() {
+   std::list<CEC_ADAPTER_TYPE> res;
    // release the Global Interpreter lock
    Py_BEGIN_ALLOW_THREADS
    // get adapters
    int cec_count = 10;
-   cec_adapter * dev_list = (cec_adapter*)malloc(
-         cec_count * sizeof(cec_adapter));
-   int count = CEC_adapter->FindAdapters(dev_list, cec_count);
+   CEC_ADAPTER_TYPE * dev_list = (CEC_ADAPTER_TYPE*)malloc(
+         cec_count * sizeof(CEC_ADAPTER_TYPE));
+   int count = CEC_adapter->CEC_FIND_ADAPTERS(dev_list, cec_count);
    if( count > cec_count ) {
       cec_count = count;
-      dev_list = (cec_adapter*)realloc(dev_list, 
-         cec_count * sizeof(cec_adapter));
-      count = CEC_adapter->FindAdapters(dev_list, cec_count);
+      dev_list = (CEC_ADAPTER_TYPE*)realloc(dev_list, 
+         cec_count * sizeof(CEC_ADAPTER_TYPE));
+      count = CEC_adapter->CEC_FIND_ADAPTERS(dev_list, cec_count);
       count = std::min(count, cec_count);
    }
 
@@ -189,13 +200,28 @@ static PyObject * list_adapters(PyObject * self, PyObject * args) {
    PyObject * result = NULL;
 
    if( PyArg_ParseTuple(args, ":list_adapters") ) {
-      std::list<cec_adapter> dev_list = get_adapters();
+      std::list<CEC_ADAPTER_TYPE> dev_list = get_adapters();
       // set up our result list
       result = PyList_New(0);
 
       // populate our result list
-      std::list<cec_adapter>::const_iterator itr;
+      std::list<CEC_ADAPTER_TYPE>::const_iterator itr;
       for( itr = dev_list.begin(); itr != dev_list.end(); itr++ ) {
+#if HAVE_CEC_ADAPTER_DESCRIPTOR
+         PyList_Append(result, Py_BuildValue("s", itr->strComName));
+         /* Convert all of the fields 
+         PyList_Append(result, Py_BuildValue("sshhhhii", 
+                  itr->strComName,
+                  itr->strComPath,
+                  itr->iVendorId,
+                  itr->iProductId,
+                  itr->iFirmwareVersion,
+                  itr->iPhysicalAddress,
+                  itr->iFirmwareBuildDate,
+                  itr->adapterType
+                  ));
+                  */
+#else
          PyList_Append(result, Py_BuildValue("s", itr->comm));
          /* Convert all of the fields 
          PyList_Append(result, Py_BuildValue("sshhhhii", 
@@ -209,6 +235,7 @@ static PyObject * list_adapters(PyObject * self, PyObject * args) {
                   itr->adapterType
                   ));
                   */
+#endif
       }
    }
 
@@ -221,9 +248,13 @@ static PyObject * init(PyObject * self, PyObject * args) {
 
    if( PyArg_ParseTuple(args, "|s:init", &dev) ) {
       if( !dev ) {
-         std::list<cec_adapter> devs = get_adapters();
+         std::list<CEC_ADAPTER_TYPE> devs = get_adapters();
          if( devs.size() > 0 ) {
+#if HAVE_CEC_ADAPTER_DESCRIPTOR
+            dev = devs.front().strComName;
+#else
             dev = devs.front().comm;
+#endif
          } else {
             PyErr_SetString(PyExc_Exception, "No default adapter found");
          }
@@ -536,6 +567,7 @@ int log_cb(void * self, const cec_log_message message) {
    debug("Event trigger done\n");
    Py_DECREF(args);
    PyGILState_Release(gstate);
+   debug("GIL released\n");
    return 1;
 }
 
@@ -626,6 +658,10 @@ void activated_cb(void * self, const cec_logical_address, const uint8_t state) {
 PyMODINIT_FUNC initcec(void) {
    // set up callback data structures
    open_callbacks = new CallbackList();
+
+   // Make sure threads are enabled in the python interpreter
+   // this also acquires the global interpreter lock
+   PyEval_InitThreads();
 
    // set up libcec
    //  libcec config
