@@ -131,46 +131,6 @@ void parse_test() {
    assert(parse_physical_addr("f.f.f.f") == 0xFFFF);
 }
 
-class CallbackList {
-   private:
-      std::list<PyObject*> callbacks;
-
-   public:
-      ~CallbackList() {
-         // decrement the reference counts of everything in the list
-         std::list<PyObject*>::const_iterator itr;
-         for( itr = callbacks.begin(); itr != callbacks.end(); itr++ ) {
-            Py_DECREF(*itr);
-         }
-      }
-
-      void add(PyObject * cb) {
-         assert(cb);
-         Py_INCREF(cb);
-         callbacks.push_back(cb);
-      }
-
-      PyObject * call(PyObject * args) {
-         Py_INCREF(Py_None);
-         PyObject * result = Py_None;
-
-         std::list<PyObject*>::const_iterator itr;
-         for( itr = callbacks.begin(); itr != callbacks.end(); itr++ ) {
-            // see also: PyObject_CallFunction(...) which can take C args
-            PyObject * temp = PyObject_CallObject(*itr, args);
-            if( temp ) {
-               Py_DECREF(temp);
-            } else {
-               Py_DECREF(Py_None);
-               return NULL;
-            }
-         }
-         return result;
-      }
-};
-
-CallbackList * open_callbacks; // TODO: remove/update
-
 ICECAdapter * CEC_adapter;
 PyObject * Device;
 
@@ -390,15 +350,15 @@ static PyObject * trigger_event(long int event, PyObject * args) {
    Py_INCREF(Py_None);
    PyObject * result = Py_None;
 
-   debug("Triggering event %ld\n", event);
+   //debug("Triggering event %ld\n", event);
 
    int i=0;
    for( cb_list::const_iterator itr = callbacks.begin();
          itr != callbacks.end();
          ++itr ) {
-      debug("Checking callback %d with events %ld\n", i, itr->event);
+      //debug("Checking callback %d with events %ld\n", i, itr->event);
       if( itr->event & event ) {
-         debug("Calling callback %d\n", i);
+         //debug("Calling callback %d\n", i);
          // see also: PyObject_CallFunction(...) which can take C args
          PyObject * temp = PyObject_CallObject(itr->cb, args);
          if( temp ) {
@@ -557,7 +517,7 @@ int log_cb(void * self, const cec_log_message message) {
    debug("got log callback\n");
    PyGILState_STATE gstate;
    gstate = PyGILState_Ensure();
-   debug("GIL acquired\n");
+   //debug("GIL acquired\n");
    debug("Message level %d\n", message.level);
    debug("Message time %" PRId64 "\n", message.time);
    debug("Message content %s\n", message.message);
@@ -567,12 +527,12 @@ int log_cb(void * self, const cec_log_message message) {
          level,
          time,
          message.message);
-   debug("argument PyObject created\n");
+   //debug("argument PyObject created\n");
    trigger_event(EVENT_LOG, args);
-   debug("Event trigger done\n");
+   //debug("Event trigger done\n");
    Py_DECREF(args);
    PyGILState_Release(gstate);
-   debug("GIL released\n");
+   //debug("GIL released\n");
    return 1;
 }
 
@@ -661,9 +621,6 @@ void activated_cb(void * self, const cec_logical_address, const uint8_t state) {
 }
 
 PyMODINIT_FUNC initcec(void) {
-   // set up callback data structures
-   open_callbacks = new CallbackList();
-
    // Make sure threads are enabled in the python interpreter
    // this also acquires the global interpreter lock
    PyEval_InitThreads();
