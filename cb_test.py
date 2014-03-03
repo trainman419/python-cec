@@ -32,5 +32,9 @@ tv = cec.Device(0)
 print("Turning on TV")
 tv.power_on()
 
+print("Volume Up")
+cec.volume_up()
+print("Volume Down")
+cec.volume_down()
 
 print("SUCCESS!")
