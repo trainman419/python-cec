@@ -36,7 +36,7 @@ sudo apt-get install python-dev build-essential libcec-dev cec-utils
 ### Checkout, build and install
 
 ```
-git clone -b 0.1.1 https://github.com/trainman419/python-cec.git
+git clone -b 0.2.0 https://github.com/trainman419/python-cec.git
 cd python-cec
 python setup.py install
 ```
@@ -62,7 +62,8 @@ import cec
 
 adapters = cec.list_adapters() # may be called before init()
 
-cec.init(adapter=cec.DEFAULT)
+cec.init() # use default adapter
+cec.init(adapter) # use a specific adapter
 
 cec.close()  # not implemented yet
 
