@@ -15,3 +15,8 @@ $(BUILD_DIR)/cec.so: cec.cpp setup.py device.h device.cpp
 test: all
 	./test.py
 .PHONY: test
+
+clean:
+	rm -rf build
+	rm -f cec.so
+.PHONY: clean
