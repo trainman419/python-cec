@@ -23,12 +23,17 @@
  * Author: Austin Hendrix <namniart@gmail.com>
  */
 
+// request the std format macros
+#define __STDC_FORMAT_MACROS
+
 #include <Python.h>
 #include <stdlib.h>
+#include <inttypes.h>
 #include <libcec/cec.h>
 #include <list>
 
 #include "device.h"
+
 
 using namespace CEC;
 
@@ -349,7 +354,7 @@ static PyObject * add_callback(PyObject * self, PyObject * args) {
 
       Callback new_cb(events, callback);
 
-      debug("Adding callback for event %d\n", events);
+      debug("Adding callback for event %ld\n", events);
       callbacks.push_back(new_cb);
 
       Py_INCREF(Py_None);
@@ -554,7 +559,7 @@ int log_cb(void * self, const cec_log_message message) {
    gstate = PyGILState_Ensure();
    debug("GIL acquired\n");
    debug("Message level %d\n", message.level);
-   debug("Message time %d\n", message.time);
+   debug("Message time %" PRId64 "\n", message.time);
    debug("Message content %s\n", message.message);
    int level = message.level;
    long int time = message.time;
