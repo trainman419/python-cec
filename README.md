@@ -115,6 +115,19 @@ cec.persist_config()
 cec.set_port(device, port)
 ```
 
+## Changelog
+
+### 0.2.0 ( 2014-03-03 )
+* Add initial callback implementation
+* Fix libcec 1.6.0 backwards compatibility support
+
+### 0.1.1 ( 2013-11-26 )
+* Add libcec 1.6.0 backwards compatibility
+* Known Bug: no longer compatible with libcec 2.1.0 and later
+
+### 0.1.0 ( 2013-11-03 )
+* First stable release
+
 ## Copyright
 
 Copyright (C) 2013 Austin Hendrix <namniart@gmail.com>
