@@ -114,7 +114,15 @@ int parse_physical_addr(char * addr) {
    }
 }
 
-#define RETURN_BOOL(arg) do { PyObject * ret = (arg)?Py_True:Py_False; Py_INCREF(ret); return ret; } while(0)
+#define RETURN_BOOL(arg) do { \
+  bool result; \
+  Py_BEGIN_ALLOW_THREADS \
+  result = (arg); \
+  Py_END_ALLOW_THREADS \
+  PyObject * ret = (result)?Py_True:Py_False; \
+  Py_INCREF(ret); \
+  return ret; \
+} while(0)
 
 void parse_test() {
    assert(parse_physical_addr("0.0.0.0") == 0);
