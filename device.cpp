@@ -275,6 +275,12 @@ static PyObject * Device_str(Device * self) {
    return Py_BuildValue("s", addr);
 }
 
+static PyObject * Device_repr(Device * self) {
+   char addr[16];
+   snprintf(addr, 16, "Device(%d)", self->addr);
+   return Py_BuildValue("s", addr);
+}
+
 static PyMethodDef Device_methods[] = {
    {"is_on", (PyCFunction)Device_is_on, METH_NOARGS, 
       "Get device power status"},
@@ -300,7 +306,7 @@ static PyTypeObject DeviceType = {
    0,                         /*tp_getattr*/
    0,                         /*tp_setattr*/
    0,                         /*tp_compare*/
-   0,                         /*tp_repr*/
+   (reprfunc)Device_repr,     /*tp_repr*/
    0,                         /*tp_as_number*/
    0,                         /*tp_as_sequence*/
    0,                         /*tp_as_mapping*/
