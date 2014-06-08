@@ -36,7 +36,7 @@ sudo apt-get install python-dev build-essential libcec-dev cec-utils
 ### Checkout, build and install
 
 ```
-git clone -b 0.2.1 https://github.com/trainman419/python-cec.git
+git clone -b 0.2.2 https://github.com/trainman419/python-cec.git
 cd python-cec
 python setup.py install
 ```
@@ -116,6 +116,10 @@ cec.set_port(device, port)
 ```
 
 ## Changelog
+
+### 0.2.2 ( 2014-06-08 )
+* Fix deadlock
+* Add repr for Device
 
 ### 0.2.1 ( 2014-03-03 )
 * Fix deadlock in Device
