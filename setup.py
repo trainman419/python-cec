@@ -13,6 +13,6 @@ if "OPT" in cfg_vars:
 python_cec = Extension('cec', sources = [ 'cec.cpp', 'device.cpp' ], 
                         libraries = [ 'cec' ])
 
-setup(name='cec', version='0.1.0',
+setup(name='cec', version='0.2.2',
       description="Python bindings for libcec",
       ext_modules=[python_cec])
