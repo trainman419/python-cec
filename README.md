@@ -33,12 +33,10 @@ sudo apt-get update
 sudo apt-get install python-dev build-essential libcec-dev cec-utils
 ```
 
-### Checkout, build and install
+### Install from PIP
 
 ```
-git clone -b 0.2.2 https://github.com/trainman419/python-cec.git
-cd python-cec
-python setup.py install
+pip install cec
 ```
 
 ## Getting Started
