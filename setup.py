@@ -11,8 +11,9 @@ if "OPT" in cfg_vars:
     cfg_vars["OPT"] = cfg_vars["OPT"].replace("-Wstrict-prototypes", "")
 
 python_cec = Extension('cec', sources = [ 'cec.cpp', 'device.cpp' ], 
+                        include_dirs=['include'],
                         libraries = [ 'cec' ])
 
-setup(name='cec', version='0.2.2',
+setup(name='cec', version='0.2.3',
       description="Python bindings for libcec",
       ext_modules=[python_cec])

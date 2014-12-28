@@ -117,6 +117,10 @@ cec.set_port(device, port)
 
 ## Changelog
 
+### 0.2.3 ( 2014-12-28 )
+* Add device.h to manifest
+* Initial pip release
+
 ### 0.2.2 ( 2014-06-08 )
 * Fix deadlock
 * Add repr for Device
