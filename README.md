@@ -115,6 +115,9 @@ cec.set_port(device, port)
 
 ## Changelog
 
+### 0.2.5 ( 2016-03-31 )
+* re-release of version 0.2.4. Original release failed and version number is now lost
+
 ### 0.2.4 ( 2016-03-31 )
 * libcec3 compatibility
 
