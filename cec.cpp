@@ -636,7 +636,9 @@ PyMODINIT_FUNC initcec(void) {
    snprintf(CEC_config->strDeviceName, 13, "python-cec");
    // CEC_CLIENT_VERSION_CURRENT was introduced in 2.0.4
    // just use 2.1.0 because the conditional is simpler
-#if CEC_LIB_VERSION_MAJOR >= 2 && CEC_LIB_VERSION_MINOR >= 1
+#if CEC_LIB_VERSION_MAJOR >= 3
+   CEC_config->clientVersion = LIBCEC_VERSION_CURRENT;
+#elif CEC_LIB_VERSION_MAJOR >= 2 && CEC_LIB_VERSION_MINOR >= 1
    CEC_config->clientVersion = CEC_CLIENT_VERSION_CURRENT;
 #else
    // fall back to 1.6.0 since it's the lowest common denominator shipped with
