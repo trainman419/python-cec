@@ -115,6 +115,9 @@ cec.set_port(device, port)
 
 ## Changelog
 
+### 0.2.4 ( 2016-03-31 )
+* libcec3 compatibility
+
 ### 0.2.3 ( 2014-12-28 )
 * Add device.h to manifest
 * Initial pip release
