@@ -408,8 +408,8 @@ static PyObject * set_stream_path(PyObject * self, PyObject * args) {
 
    if( PyArg_ParseTuple(args, "O:set_stream_path", &arg) ) {
       Py_INCREF(arg);
-      if(PyInt_Check(arg)) {
-         long arg_l = PyInt_AsLong(arg);
+      if(PyLong_Check(arg)) {
+         long arg_l = PyLong_AsLong(arg);
          Py_DECREF(arg);
          if( arg_l < 0 || arg_l > 15 ) {
             PyErr_SetString(PyExc_ValueError, "Logical address must be between 0 and 15");
@@ -417,8 +417,35 @@ static PyObject * set_stream_path(PyObject * self, PyObject * args) {
          } else {
             RETURN_BOOL(CEC_adapter->SetStreamPath((cec_logical_address)arg_l));
          }
+#if PY_MAJOR_VERSION < 3
       } else if(PyString_Check(arg)) {
          char * arg_s = PyString_AsString(arg);
+         if( arg_s ) {
+            int pa = parse_physical_addr(arg_s);
+            Py_DECREF(arg);
+            if( pa < 0 ) {
+               PyErr_SetString(PyExc_ValueError, "Invalid physical address");
+               return NULL;
+            } else {
+               RETURN_BOOL(CEC_adapter->SetStreamPath((uint16_t)pa));
+            }
+         } else {
+            Py_DECREF(arg);
+            return NULL;
+         }
+#endif
+      } else if(PyUnicode_Check(arg)) {
+         // Convert from Unicode to ASCII
+         PyObject* ascii_arg = PyUnicode_AsASCIIString(arg);
+         if (NULL == ascii_arg) {
+            // Means the string can't be converted to ASCII, the codec failed
+            PyErr_SetString(PyExc_ValueError,
+               "Could not convert address to ASCII");
+            return NULL;
+         }
+
+         // Get the actual bytes as a C string
+         char * arg_s = PyByteArray_AsString(ascii_arg);
          if( arg_s ) {
             int pa = parse_physical_addr(arg_s);
             Py_DECREF(arg);
