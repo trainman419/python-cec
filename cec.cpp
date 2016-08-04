@@ -395,6 +395,12 @@ static PyObject * volume_down(PyObject * self, PyObject * args) {
    return NULL;
 }
 
+static PyObject * set_active_source(PyObject * self, PyObject * args) {
+   if( PyArg_ParseTuple(args, ":set_active_source") )
+      RETURN_BOOL(CEC_adapter->SetActiveSource());
+   return NULL;
+}
+
 #if CEC_LIB_VERSION_MAJOR > 1
 static PyObject * toggle_mute(PyObject * self, PyObject * args) {
    if( PyArg_ParseTuple(args, ":toggle_mute") )
@@ -530,6 +536,7 @@ static PyMethodDef CecMethods[] = {
    {"remove_callback", remove_callback, METH_VARARGS, "Remove a callback"},
    {"volume_up",   volume_up,   METH_VARARGS, "Volume Up"},
    {"volume_down", volume_down, METH_VARARGS, "Volume Down"},
+   {"set_active_source", set_active_source, METH_VARARGS, "Set Active Source"},
 #if CEC_LIB_VERSION_MAJOR > 1
    {"toggle_mute", toggle_mute, METH_VARARGS, "Toggle Mute"},
 #endif
