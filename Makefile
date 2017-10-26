@@ -2,7 +2,7 @@ all: cec.so
 
 ARCH:=$(shell uname -m)
 SYS:=$(shell uname -s | tr '[:upper:]' '[:lower:]')
-PY_VER:=$(shell python -c 'import sys; print "%d.%d"%(sys.version_info.major, sys.version_info.minor);')
+PY_VER:=$(shell python -c 'import sys; print("%d.%d"%(sys.version_info.major, sys.version_info.minor));')
 
 BUILD_DIR:=build/lib.$(SYS)-$(ARCH)-$(PY_VER)
 
