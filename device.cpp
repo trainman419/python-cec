@@ -244,17 +244,33 @@ static PyObject * Device_new(PyTypeObject * type, PyObject * args,
 
       if( !(self->cecVersion = Py_BuildValue("s", ver_str)) ) return NULL;
 
+#if CEC_LIB_VERSION_MAJOR >= 4
+      std::string name;
+      Py_BEGIN_ALLOW_THREADS
+      name = adapter->GetDeviceOSDName(self->addr);
+      Py_END_ALLOW_THREADS
+      if( !(self->osdName = Py_BuildValue("s#", name.c_str(), name.length())) ) return NULL;
+#else
       cec_osd_name name;
       Py_BEGIN_ALLOW_THREADS
       name = adapter->GetDeviceOSDName(self->addr);
       Py_END_ALLOW_THREADS
       if( !(self->osdName = Py_BuildValue("s", name.name)) ) return NULL;
+#endif
 
+#if CEC_LIB_VERSION_MAJOR >= 4
+      std::string lang;
+      Py_BEGIN_ALLOW_THREADS
+      lang = adapter->GetDeviceMenuLanguage(self->addr);
+      Py_END_ALLOW_THREADS
+      if( !(self->lang = Py_BuildValue("s#", lang.c_str(), lang.length())) ) return NULL;
+#else
       cec_menu_language lang;
       Py_BEGIN_ALLOW_THREADS
       adapter->GetDeviceMenuLanguage(self->addr, &lang);
       Py_END_ALLOW_THREADS
       if( !(self->lang = Py_BuildValue("s", lang.language)) ) return NULL;
+#endif
    }
 
    return (PyObject *)self;

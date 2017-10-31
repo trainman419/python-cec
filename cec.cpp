@@ -520,36 +520,70 @@ static PyMethodDef CecMethods[] = {
 libcec_configuration * CEC_config;
 ICECCallbacks * CEC_callbacks; 
 
+#if CEC_LIB_VERSION_MAJOR >= 4
+void log_cb(void * self, const cec_log_message* message) {
+#else
 int log_cb(void * self, const cec_log_message message) {
+#endif
    debug("got log callback\n");
    PyGILState_STATE gstate;
    gstate = PyGILState_Ensure();
+#if CEC_LIB_VERSION_MAJOR >= 4
+   int level = message->level;
+   long int time = message->time;
+   const char* msg = message->message;
+#else
    int level = message.level;
    long int time = message.time;
+   const char* msg = message.message;
+#endif
    PyObject * args = Py_BuildValue("(iils)", EVENT_LOG, 
          level,
          time,
-         message.message);
+         msg);
    trigger_event(EVENT_LOG, args);
    Py_DECREF(args);
    PyGILState_Release(gstate);
+#if CEC_LIB_VERSION_MAJOR >= 4
+   return;
+#else
    return 1;
+#endif
 }
 
+#if CEC_LIB_VERSION_MAJOR >= 4
+void keypress_cb(void * self, const cec_keypress* key) {
+#else
 int keypress_cb(void * self, const cec_keypress key) {
+#endif
    debug("got keypress callback\n");
    PyGILState_STATE gstate;
    gstate = PyGILState_Ensure();
+#if CEC_LIB_VERSION_MAJOR >= 4
+   cec_user_control_code keycode = key->keycode;
+   unsigned int duration = key->duration;
+#else
+   cec_user_control_code keycode = key.keycode;
+   unsigned int duration = key.duration;
+#endif
    PyObject * args = Py_BuildValue("(iBI)", EVENT_KEYPRESS,
-         key.keycode,
-         key.duration);
+         keycode,
+         duration);
    trigger_event(EVENT_KEYPRESS, args);
    Py_DECREF(args);
    PyGILState_Release(gstate);
+#if CEC_LIB_VERSION_MAJOR >= 4
+   return;
+#else
    return 1;
+#endif
 }
 
+#if CEC_LIB_VERSION_MAJOR >= 4
+void command_cb(void * self, const cec_command* command) {
+#else
 int command_cb(void * self, const cec_command command) {
+#endif
    debug("got command callback\n");
    PyGILState_STATE gstate;
    gstate = PyGILState_Ensure();
@@ -560,10 +594,18 @@ int command_cb(void * self, const cec_command command) {
    //trigger_event(EVENT_COMMAND, args);
    Py_DECREF(args);
    PyGILState_Release(gstate);
+#if CEC_LIB_VERSION_MAJOR >= 4
+   return;
+#else
    return 1;
+#endif
 }
 
+#if CEC_LIB_VERSION_MAJOR >= 4
+void config_cb(void * self, const libcec_configuration*) {
+#else
 int config_cb(void * self, const libcec_configuration) {
+#endif
    debug("got config callback\n");
    PyGILState_STATE gstate;
    gstate = PyGILState_Ensure();
@@ -578,10 +620,18 @@ int config_cb(void * self, const libcec_configuration) {
    //trigger_event(EVENT_CONFIG_CHANGE, args);
    Py_DECREF(args);
    PyGILState_Release(gstate);
+#if CEC_LIB_VERSION_MAJOR >= 4
+   return;
+#else
    return 1;
+#endif
 }
 
+#if CEC_LIB_VERSION_MAJOR >= 4
+void alert_cb(void * self, const libcec_alert alert, const libcec_parameter p) {
+#else
 int alert_cb(void * self, const libcec_alert alert, const libcec_parameter p) {
+#endif
    debug("got alert callback\n");
    PyGILState_STATE gstate;
    gstate = PyGILState_Ensure();
@@ -595,7 +645,11 @@ int alert_cb(void * self, const libcec_alert alert, const libcec_parameter p) {
    trigger_event(EVENT_ALERT, args);
    Py_DECREF(args);
    PyGILState_Release(gstate);
+#if CEC_LIB_VERSION_MAJOR >= 4
+   return;
+#else
    return 1;
+#endif
 }
 
 int menu_cb(void * self, const cec_menu_state menu) {
@@ -654,6 +708,15 @@ PyMODINIT_FUNC initcec(void) {
 #if CEC_LIB_VERSION_MAJOR > 1 || ( CEC_LIB_VERSION_MAJOR == 1 && CEC_LIB_VERSION_MINOR >= 7 )
    CEC_callbacks->Clear();
 #endif
+#if CEC_LIB_VERSION_MAJOR >= 4
+   CEC_callbacks->logMessage = log_cb;
+   CEC_callbacks->keyPress = keypress_cb;
+   CEC_callbacks->commandReceived = command_cb;
+   CEC_callbacks->configurationChanged = config_cb;
+   CEC_callbacks->alert = alert_cb;
+   CEC_callbacks->menuStateChanged = menu_cb;
+   CEC_callbacks->sourceActivated = activated_cb;
+#else
    CEC_callbacks->CBCecLogMessage = log_cb;
    CEC_callbacks->CBCecKeyPress = keypress_cb;
    CEC_callbacks->CBCecCommand = command_cb;
@@ -661,6 +724,7 @@ PyMODINIT_FUNC initcec(void) {
    CEC_callbacks->CBCecAlert = alert_cb;
    CEC_callbacks->CBCecMenuStateChanged = menu_cb;
    CEC_callbacks->CBCecSourceActivated = activated_cb;
+#endif
 
    CEC_config->callbacks = CEC_callbacks;
 
