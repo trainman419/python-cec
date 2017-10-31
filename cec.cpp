@@ -93,7 +93,7 @@ using namespace CEC;
 #endif
 
 // cec_adapter_descriptor and DetectAdapters were introduced in 2.1.0
-#if CEC_LIB_VERSION_MAJOR >= 2 && CEC_LIB_VERSION_MINOR >= 1
+#if CEC_LIB_VERSION_MAJOR >= 3 || (CEC_LIB_VERSION_MAJOR >= 2 && CEC_LIB_VERSION_MINOR >= 1)
 #define CEC_ADAPTER_TYPE cec_adapter_descriptor
 #define CEC_FIND_ADAPTERS DetectAdapters
 #define HAVE_CEC_ADAPTER_DESCRIPTOR 1
