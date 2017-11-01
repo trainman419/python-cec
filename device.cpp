@@ -282,7 +282,7 @@ static void Device_dealloc(Device * self) {
    Py_DECREF(self->cecVersion);
    Py_DECREF(self->osdName);
    Py_DECREF(self->lang);
-   self->ob_type->tp_free((PyObject*)self);
+   Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 static PyObject * Device_str(Device * self) {
@@ -312,8 +312,7 @@ static PyMethodDef Device_methods[] = {
 };
 
 static PyTypeObject DeviceType = {
-   PyObject_HEAD_INIT(NULL)
-   0,                         /*ob_size*/
+   PyVarObject_HEAD_INIT(NULL, 0)
    "cec.Device",              /*tp_name*/
    sizeof(Device),            /*tp_basicsize*/
    0,                         /*tp_itemsize*/
