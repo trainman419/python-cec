@@ -383,6 +383,34 @@ static PyObject * trigger_event(long int event, PyObject * args) {
    return result;
 }
 
+static PyObject * is_active_source(PyObject * self, PyObject * args) {
+   unsigned char addr;
+
+   if( PyArg_ParseTuple(args, "b:is_active_source", &addr) ) {
+      if( addr < 0 || addr > 15 ) {
+         PyErr_SetString(PyExc_ValueError, "Logical address must be between 0 and 15");
+         return NULL;
+      } else {
+         RETURN_BOOL(CEC_adapter->IsActiveSource((cec_logical_address)addr));
+      }
+   }
+   return NULL;
+}
+
+static PyObject * set_active_source(PyObject * self, PyObject * args) {
+   unsigned char devtype = (unsigned char)CEC_DEVICE_TYPE_RESERVED;
+
+   if( PyArg_ParseTuple(args, "|b:set_active_source", &devtype) ) {
+      if( devtype < 0 || devtype > 5 ) {
+         PyErr_SetString(PyExc_ValueError, "Device type must be between 0 and 5");
+         return NULL;
+      } else {
+         RETURN_BOOL(CEC_adapter->SetActiveSource((cec_device_type)devtype));
+      }
+   }
+   return NULL;
+}
+
 static PyObject * volume_up(PyObject * self, PyObject * args) {
    if( PyArg_ParseTuple(args, ":volume_up") )
       RETURN_BOOL(CEC_adapter->VolumeUp());
@@ -501,6 +529,8 @@ static PyMethodDef CecMethods[] = {
    {"list_devices", list_devices, METH_VARARGS, "List devices"},
    {"add_callback", add_callback, METH_VARARGS, "Add a callback"},
    {"remove_callback", remove_callback, METH_VARARGS, "Remove a callback"},
+   {"is_active_source", is_active_source, METH_VARARGS, "Check active source"},
+   {"set_active_source", set_active_source, METH_VARARGS, "Set active source"},
    {"volume_up",   volume_up,   METH_VARARGS, "Volume Up"},
    {"volume_down", volume_down, METH_VARARGS, "Volume Down"},
 #if CEC_LIB_VERSION_MAJOR > 1
@@ -780,6 +810,20 @@ PyMODINIT_FUNC initcec(void) {
          CEC_MENU_STATE_ACTIVATED);
    PyModule_AddIntConstant(m, "CEC_MENU_STATE_DEACTIVATED",
          CEC_MENU_STATE_DEACTIVATED);
+
+   // constants for device types
+   PyModule_AddIntConstant(m, "CEC_DEVICE_TYPE_TV",
+         CEC_DEVICE_TYPE_TV);
+   PyModule_AddIntConstant(m, "CEC_DEVICE_TYPE_RECORDING_DEVICE",
+         CEC_DEVICE_TYPE_RECORDING_DEVICE);
+   PyModule_AddIntConstant(m, "CEC_DEVICE_TYPE_RESERVED",
+         CEC_DEVICE_TYPE_RESERVED);
+   PyModule_AddIntConstant(m, "CEC_DEVICE_TYPE_TUNER",
+         CEC_DEVICE_TYPE_TUNER);
+   PyModule_AddIntConstant(m, "CEC_DEVICE_TYPE_PLAYBACK_DEVICE",
+         CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
+   PyModule_AddIntConstant(m, "CEC_DEVICE_TYPE_AUDIO_SYSTEM",
+         CEC_DEVICE_TYPE_AUDIO_SYSTEM);
 
    // expose whether or not we're using the new cec_adapter_descriptor API
    // this should help debugging by exposing which version was detected and
