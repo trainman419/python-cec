@@ -188,6 +188,36 @@ static PyObject * Device_audio_input(Device * self, PyObject * args) {
    }
 }
 
+static PyObject * Device_transmit(Device * self, PyObject * args) {
+   unsigned char opcode;
+   const char * params = NULL;
+   int param_count = 0;
+   if( PyArg_ParseTuple(args, "b|s#:transmit", &opcode,
+         &params, &param_count) ) {
+      cec_command data;
+      bool success;
+      Py_BEGIN_ALLOW_THREADS
+      data.initiator = adapter->GetLogicalAddresses().primary;
+      data.destination = self->addr;
+      data.opcode = (cec_opcode)opcode;
+      data.opcode_set = 1;
+      if( params ) {
+         for( int i=0; i<param_count; i++ ) {
+            data.PushBack(((uint8_t *)params)[i]);
+         }
+      }
+      success = adapter->Transmit(data);
+      Py_END_ALLOW_THREADS
+      if( success ) {
+         Py_RETURN_TRUE;
+      } else {
+         Py_RETURN_FALSE;
+      }
+   } else {
+      return NULL;
+   }
+}
+
 static PyObject * Device_new(PyTypeObject * type, PyObject * args, 
       PyObject * kwds) {
    Device * self;
@@ -322,6 +352,8 @@ static PyMethodDef Device_methods[] = {
       "Select AV Input"},
    {"set_audio_input", (PyCFunction)Device_audio_input, METH_VARARGS,
       "Select Audio Input"},
+   {"transmit", (PyCFunction)Device_transmit, METH_VARARGS,
+      "Transmit a raw CEC command to this device"},
    {NULL}
 };
 

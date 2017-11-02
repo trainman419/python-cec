@@ -383,6 +383,38 @@ static PyObject * trigger_event(long int event, PyObject * args) {
    return result;
 }
 
+static PyObject * transmit(PyObject * self, PyObject * args) {
+   unsigned char destination;
+   unsigned char opcode;
+   const char * params = NULL;
+   int param_count = 0;
+
+   if( PyArg_ParseTuple(args, "bb|s#:transmit", &destination, &opcode,
+         &params, &param_count) ) {
+      if( destination < 0 || destination > 15 ) {
+         PyErr_SetString(PyExc_ValueError, "Logical address must be between 0 and 15");
+         return NULL;
+      }
+      cec_command data;
+      bool success;
+      Py_BEGIN_ALLOW_THREADS
+      data.initiator = CEC_adapter->GetLogicalAddresses().primary;
+      data.destination = (cec_logical_address)destination;
+      data.opcode = (cec_opcode)opcode;
+      data.opcode_set = 1;
+      if( params ) {
+         for( int i=0; i<param_count; i++ ) {
+            data.PushBack(((uint8_t *)params)[i]);
+         }
+      }
+      success = CEC_adapter->Transmit(data);
+      Py_END_ALLOW_THREADS
+      RETURN_BOOL(success);
+   }
+
+   return NULL;
+}
+
 static PyObject * is_active_source(PyObject * self, PyObject * args) {
    unsigned char addr;
 
@@ -529,6 +561,7 @@ static PyMethodDef CecMethods[] = {
    {"list_devices", list_devices, METH_VARARGS, "List devices"},
    {"add_callback", add_callback, METH_VARARGS, "Add a callback"},
    {"remove_callback", remove_callback, METH_VARARGS, "Remove a callback"},
+   {"transmit", transmit, METH_VARARGS, "Transmit a raw CEC command"},
    {"is_active_source", is_active_source, METH_VARARGS, "Check active source"},
    {"set_active_source", set_active_source, METH_VARARGS, "Set active source"},
    {"volume_up",   volume_up,   METH_VARARGS, "Volume Up"},
@@ -824,6 +857,186 @@ PyMODINIT_FUNC initcec(void) {
          CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
    PyModule_AddIntConstant(m, "CEC_DEVICE_TYPE_AUDIO_SYSTEM",
          CEC_DEVICE_TYPE_AUDIO_SYSTEM);
+
+   // constants for logical addresses
+   PyModule_AddIntConstant(m, "CECDEVICE_UNKNOWN",
+         CECDEVICE_UNKNOWN);
+   PyModule_AddIntConstant(m, "CECDEVICE_TV",
+         CECDEVICE_TV);
+   PyModule_AddIntConstant(m, "CECDEVICE_RECORDINGDEVICE1",
+         CECDEVICE_RECORDINGDEVICE1);
+   PyModule_AddIntConstant(m, "CECDEVICE_RECORDINGDEVICE2",
+         CECDEVICE_RECORDINGDEVICE2);
+   PyModule_AddIntConstant(m, "CECDEVICE_TUNER1",
+         CECDEVICE_TUNER1);
+   PyModule_AddIntConstant(m, "CECDEVICE_PLAYBACKDEVICE1",
+         CECDEVICE_PLAYBACKDEVICE1);
+   PyModule_AddIntConstant(m, "CECDEVICE_AUDIOSYSTEM",
+         CECDEVICE_AUDIOSYSTEM);
+   PyModule_AddIntConstant(m, "CECDEVICE_TUNER2",
+         CECDEVICE_TUNER2);
+   PyModule_AddIntConstant(m, "CECDEVICE_TUNER3",
+         CECDEVICE_TUNER3);
+   PyModule_AddIntConstant(m, "CECDEVICE_PLAYBACKDEVICE2",
+         CECDEVICE_PLAYBACKDEVICE2);
+   PyModule_AddIntConstant(m, "CECDEVICE_RECORDINGDEVICE3",
+         CECDEVICE_RECORDINGDEVICE3);
+   PyModule_AddIntConstant(m, "CECDEVICE_TUNER4",
+         CECDEVICE_TUNER4);
+   PyModule_AddIntConstant(m, "CECDEVICE_PLAYBACKDEVICE3",
+         CECDEVICE_PLAYBACKDEVICE3);
+   PyModule_AddIntConstant(m, "CECDEVICE_RESERVED1",
+         CECDEVICE_RESERVED1);
+   PyModule_AddIntConstant(m, "CECDEVICE_RESERVED2",
+         CECDEVICE_RESERVED2);
+   PyModule_AddIntConstant(m, "CECDEVICE_FREEUSE",
+         CECDEVICE_FREEUSE);
+   PyModule_AddIntConstant(m, "CECDEVICE_UNREGISTERED",
+         CECDEVICE_UNREGISTERED);
+   PyModule_AddIntConstant(m, "CECDEVICE_BROADCAST",
+         CECDEVICE_BROADCAST);
+
+   // constants for opcodes
+   PyModule_AddIntConstant(m, "CEC_OPCODE_ACTIVE_SOURCE",
+         CEC_OPCODE_ACTIVE_SOURCE);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_IMAGE_VIEW_ON",
+         CEC_OPCODE_IMAGE_VIEW_ON);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_TEXT_VIEW_ON",
+         CEC_OPCODE_TEXT_VIEW_ON);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_INACTIVE_SOURCE",
+         CEC_OPCODE_INACTIVE_SOURCE);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_REQUEST_ACTIVE_SOURCE",
+         CEC_OPCODE_REQUEST_ACTIVE_SOURCE);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_ROUTING_CHANGE",
+         CEC_OPCODE_ROUTING_CHANGE);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_ROUTING_INFORMATION",
+         CEC_OPCODE_ROUTING_INFORMATION);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_SET_STREAM_PATH",
+         CEC_OPCODE_SET_STREAM_PATH);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_STANDBY",
+         CEC_OPCODE_STANDBY);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_RECORD_OFF",
+         CEC_OPCODE_RECORD_OFF);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_RECORD_ON",
+         CEC_OPCODE_RECORD_ON);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_RECORD_STATUS",
+         CEC_OPCODE_RECORD_STATUS);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_RECORD_TV_SCREEN",
+         CEC_OPCODE_RECORD_TV_SCREEN);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_CLEAR_ANALOGUE_TIMER",
+         CEC_OPCODE_CLEAR_ANALOGUE_TIMER);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_CLEAR_DIGITAL_TIMER",
+         CEC_OPCODE_CLEAR_DIGITAL_TIMER);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_CLEAR_EXTERNAL_TIMER",
+         CEC_OPCODE_CLEAR_EXTERNAL_TIMER);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_SET_ANALOGUE_TIMER",
+         CEC_OPCODE_SET_ANALOGUE_TIMER);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_SET_DIGITAL_TIMER",
+         CEC_OPCODE_SET_DIGITAL_TIMER);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_SET_EXTERNAL_TIMER",
+         CEC_OPCODE_SET_EXTERNAL_TIMER);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_SET_TIMER_PROGRAM_TITLE",
+         CEC_OPCODE_SET_TIMER_PROGRAM_TITLE);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_TIMER_CLEARED_STATUS",
+         CEC_OPCODE_TIMER_CLEARED_STATUS);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_TIMER_STATUS",
+         CEC_OPCODE_TIMER_STATUS);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_CEC_VERSION",
+         CEC_OPCODE_CEC_VERSION);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_GET_CEC_VERSION",
+         CEC_OPCODE_GET_CEC_VERSION);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_GIVE_PHYSICAL_ADDRESS",
+         CEC_OPCODE_GIVE_PHYSICAL_ADDRESS);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_GET_MENU_LANGUAGE",
+         CEC_OPCODE_GET_MENU_LANGUAGE);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_REPORT_PHYSICAL_ADDRESS",
+         CEC_OPCODE_REPORT_PHYSICAL_ADDRESS);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_SET_MENU_LANGUAGE",
+         CEC_OPCODE_SET_MENU_LANGUAGE);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_DECK_CONTROL",
+         CEC_OPCODE_DECK_CONTROL);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_DECK_STATUS",
+         CEC_OPCODE_DECK_STATUS);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_GIVE_DECK_STATUS",
+         CEC_OPCODE_GIVE_DECK_STATUS);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_PLAY",
+         CEC_OPCODE_PLAY);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_GIVE_TUNER_DEVICE_STATUS",
+         CEC_OPCODE_GIVE_TUNER_DEVICE_STATUS);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_SELECT_ANALOGUE_SERVICE",
+         CEC_OPCODE_SELECT_ANALOGUE_SERVICE);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_SELECT_DIGITAL_SERVICE",
+         CEC_OPCODE_SELECT_DIGITAL_SERVICE);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_TUNER_DEVICE_STATUS",
+         CEC_OPCODE_TUNER_DEVICE_STATUS);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_TUNER_STEP_DECREMENT",
+         CEC_OPCODE_TUNER_STEP_DECREMENT);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_TUNER_STEP_INCREMENT",
+         CEC_OPCODE_TUNER_STEP_INCREMENT);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_DEVICE_VENDOR_ID",
+         CEC_OPCODE_DEVICE_VENDOR_ID);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_GIVE_DEVICE_VENDOR_ID",
+         CEC_OPCODE_GIVE_DEVICE_VENDOR_ID);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_VENDOR_COMMAND",
+         CEC_OPCODE_VENDOR_COMMAND);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_VENDOR_COMMAND_WITH_ID",
+         CEC_OPCODE_VENDOR_COMMAND_WITH_ID);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_VENDOR_REMOTE_BUTTON_DOWN",
+         CEC_OPCODE_VENDOR_REMOTE_BUTTON_DOWN);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_VENDOR_REMOTE_BUTTON_UP",
+         CEC_OPCODE_VENDOR_REMOTE_BUTTON_UP);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_SET_OSD_STRING",
+         CEC_OPCODE_SET_OSD_STRING);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_GIVE_OSD_NAME",
+         CEC_OPCODE_GIVE_OSD_NAME);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_SET_OSD_NAME",
+         CEC_OPCODE_SET_OSD_NAME);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_MENU_REQUEST",
+         CEC_OPCODE_MENU_REQUEST);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_MENU_STATUS",
+         CEC_OPCODE_MENU_STATUS);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_USER_CONTROL_PRESSED",
+         CEC_OPCODE_USER_CONTROL_PRESSED);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_USER_CONTROL_RELEASE",
+         CEC_OPCODE_USER_CONTROL_RELEASE);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_GIVE_DEVICE_POWER_STATUS",
+         CEC_OPCODE_GIVE_DEVICE_POWER_STATUS);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_REPORT_POWER_STATUS",
+         CEC_OPCODE_REPORT_POWER_STATUS);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_FEATURE_ABORT",
+         CEC_OPCODE_FEATURE_ABORT);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_ABORT",
+         CEC_OPCODE_ABORT);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_GIVE_AUDIO_STATUS",
+         CEC_OPCODE_GIVE_AUDIO_STATUS);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_GIVE_SYSTEM_AUDIO_MODE_STATUS",
+         CEC_OPCODE_GIVE_SYSTEM_AUDIO_MODE_STATUS);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_REPORT_AUDIO_STATUS",
+         CEC_OPCODE_REPORT_AUDIO_STATUS);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_SET_SYSTEM_AUDIO_MODE",
+         CEC_OPCODE_SET_SYSTEM_AUDIO_MODE);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_SYSTEM_AUDIO_MODE_REQUEST",
+         CEC_OPCODE_SYSTEM_AUDIO_MODE_REQUEST);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_SYSTEM_AUDIO_MODE_STATUS",
+         CEC_OPCODE_SYSTEM_AUDIO_MODE_STATUS);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_SET_AUDIO_RATE",
+         CEC_OPCODE_SET_AUDIO_RATE);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_START_ARC",
+         CEC_OPCODE_START_ARC);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_REPORT_ARC_STARTED",
+         CEC_OPCODE_REPORT_ARC_STARTED);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_REPORT_ARC_ENDED",
+         CEC_OPCODE_REPORT_ARC_ENDED);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_REQUEST_ARC_START",
+         CEC_OPCODE_REQUEST_ARC_START);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_REQUEST_ARC_END",
+         CEC_OPCODE_REQUEST_ARC_END);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_END_ARC",
+         CEC_OPCODE_END_ARC);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_CDC",
+         CEC_OPCODE_CDC);
+   PyModule_AddIntConstant(m, "CEC_OPCODE_NONE",
+         CEC_OPCODE_NONE);
 
    // expose whether or not we're using the new cec_adapter_descriptor API
    // this should help debugging by exposing which version was detected and
