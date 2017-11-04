@@ -123,6 +123,11 @@ cec.transmit(destination, opcode, parameters)
 
 ## Changelog
 
+### 0.2.6 ( 2017-11-03 )
+* Python 3 support ( @nforro )
+* Implement is_active_source, set_active_source, transmit ( @nforro )
+* libcec4 compatibility ( @nforro )
+
 ### 0.2.5 ( 2016-03-31 )
 * re-release of version 0.2.4. Original release failed and version number is now lost
 
