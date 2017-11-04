@@ -468,8 +468,13 @@ static PyObject * set_stream_path(PyObject * self, PyObject * args) {
 
    if( PyArg_ParseTuple(args, "O:set_stream_path", &arg) ) {
       Py_INCREF(arg);
+#if PY_MAJOR_VERSION >= 3
+      if(PyLong_Check(arg)) {
+         long arg_l = PyLong_AsLong(arg);
+#else
       if(PyInt_Check(arg)) {
          long arg_l = PyInt_AsLong(arg);
+#endif
          Py_DECREF(arg);
          if( arg_l < 0 || arg_l > 15 ) {
             PyErr_SetString(PyExc_ValueError, "Logical address must be between 0 and 15");
@@ -477,8 +482,39 @@ static PyObject * set_stream_path(PyObject * self, PyObject * args) {
          } else {
             RETURN_BOOL(CEC_adapter->SetStreamPath((cec_logical_address)arg_l));
          }
+#if PY_MAJOR_VERSION >= 3
+      } else if(PyUnicode_Check(arg)) {
+         char * arg_s = PyUnicode_AsUTF8(arg);
+#else
       } else if(PyString_Check(arg)) {
          char * arg_s = PyString_AsString(arg);
+#endif
+         if( arg_s ) {
+            int pa = parse_physical_addr(arg_s);
+            Py_DECREF(arg);
+            if( pa < 0 ) {
+               PyErr_SetString(PyExc_ValueError, "Invalid physical address");
+               return NULL;
+            } else {
+               RETURN_BOOL(CEC_adapter->SetStreamPath((uint16_t)pa));
+            }
+         } else {
+            Py_DECREF(arg);
+            return NULL;
+         }
+#endif
+      } else if(PyUnicode_Check(arg)) {
+         // Convert from Unicode to ASCII
+         PyObject* ascii_arg = PyUnicode_AsASCIIString(arg);
+         if (NULL == ascii_arg) {
+            // Means the string can't be converted to ASCII, the codec failed
+            PyErr_SetString(PyExc_ValueError,
+               "Could not convert address to ASCII");
+            return NULL;
+         }
+
+         // Get the actual bytes as a C string
+         char * arg_s = PyByteArray_AsString(ascii_arg);
          if( arg_s ) {
             int pa = parse_physical_addr(arg_s);
             Py_DECREF(arg);
@@ -740,7 +776,31 @@ void activated_cb(void * self, const cec_logical_address logical_address,
    return;
 }
 
+#if PY_MAJOR_VERSION >= 3
+static struct PyModuleDef moduledef = {
+   PyModuleDef_HEAD_INIT,
+   "cec",
+   NULL,
+   -1,
+   CecMethods,
+   NULL,
+   NULL,
+   NULL,
+   NULL
+};
+#endif
+
+#if PY_MAJOR_VERSION >= 3
+#define INITERROR return NULL
+#else
+#define INITERROR return
+#endif
+
+#if PY_MAJOR_VERSION >= 3
+PyMODINIT_FUNC PyInit_cec(void) {
+#else
 PyMODINIT_FUNC initcec(void) {
+#endif
    // Make sure threads are enabled in the python interpreter
    // this also acquires the global interpreter lock
    PyEval_InitThreads();
@@ -795,7 +855,7 @@ PyMODINIT_FUNC initcec(void) {
 
    if( !CEC_adapter ) {
       PyErr_SetString(PyExc_IOError, "Failed to initialize libcec");
-      return;
+      INITERROR;
    }
 
 #if CEC_LIB_VERSION_MAJOR > 1 || ( CEC_LIB_VERSION_MAJOR == 1 && CEC_LIB_VERSION_MINOR >= 8 )
@@ -805,11 +865,15 @@ PyMODINIT_FUNC initcec(void) {
    // set up python module
    PyTypeObject * dev = DeviceTypeInit(CEC_adapter);
    Device = (PyObject*)dev;
-   if(PyType_Ready(dev) < 0 ) return;
+   if(PyType_Ready(dev) < 0 ) INITERROR;
 
+#if PY_MAJOR_VERSION >= 3
+   PyObject * m = PyModule_Create(&moduledef);
+#else
    PyObject * m = Py_InitModule("cec", CecMethods);
+#endif
 
-   if( m == NULL ) return;
+   if( m == NULL ) INITERROR;
 
    Py_INCREF(dev);
    PyModule_AddObject(m, "Device", (PyObject*)dev);
@@ -1042,4 +1106,8 @@ PyMODINIT_FUNC initcec(void) {
    // this should help debugging by exposing which version was detected and
    // which adapter detection API was used at compile time
    PyModule_AddIntMacro(m, HAVE_CEC_ADAPTER_DESCRIPTOR);
+
+#if PY_MAJOR_VERSION >= 3
+   return m;
+#endif
 }
