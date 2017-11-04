@@ -128,6 +128,18 @@ static PyObject * Device_standby(Device * self) {
    }
 }
 
+static PyObject * Device_is_active(Device * self) {
+   bool success;
+   Py_BEGIN_ALLOW_THREADS
+   success = adapter->IsActiveSource(self->addr);
+   Py_END_ALLOW_THREADS
+   if( success ) {
+      Py_RETURN_TRUE;
+   } else {
+      Py_RETURN_FALSE;
+   }
+}
+
 static PyObject * Device_av_input(Device * self, PyObject * args) {
    unsigned char input;
    if( PyArg_ParseTuple(args, "b:set_av_input", &input) ) {
@@ -164,6 +176,36 @@ static PyObject * Device_audio_input(Device * self, PyObject * args) {
       data.opcode_set = 1;
       data.PushBack(0x6a);
       data.PushBack(input);
+      success = adapter->Transmit(data);
+      Py_END_ALLOW_THREADS
+      if( success ) {
+         Py_RETURN_TRUE;
+      } else {
+         Py_RETURN_FALSE;
+      }
+   } else {
+      return NULL;
+   }
+}
+
+static PyObject * Device_transmit(Device * self, PyObject * args) {
+   unsigned char opcode;
+   const char * params = NULL;
+   int param_count = 0;
+   if( PyArg_ParseTuple(args, "b|s#:transmit", &opcode,
+         &params, &param_count) ) {
+      cec_command data;
+      bool success;
+      Py_BEGIN_ALLOW_THREADS
+      data.initiator = adapter->GetLogicalAddresses().primary;
+      data.destination = self->addr;
+      data.opcode = (cec_opcode)opcode;
+      data.opcode_set = 1;
+      if( params ) {
+         for( int i=0; i<param_count; i++ ) {
+            data.PushBack(((uint8_t *)params)[i]);
+         }
+      }
       success = adapter->Transmit(data);
       Py_END_ALLOW_THREADS
       if( success ) {
@@ -304,10 +346,14 @@ static PyMethodDef Device_methods[] = {
       "Power on this device"},
    {"standby", (PyCFunction)Device_standby, METH_NOARGS, 
       "Put this device into standby"},
+   {"is_active", (PyCFunction)Device_is_active, METH_VARARGS,
+      "Check if this device is the active source on the bus"},
    {"set_av_input", (PyCFunction)Device_av_input, METH_VARARGS,
       "Select AV Input"},
    {"set_audio_input", (PyCFunction)Device_audio_input, METH_VARARGS,
       "Select Audio Input"},
+   {"transmit", (PyCFunction)Device_transmit, METH_VARARGS,
+      "Transmit a raw CEC command to this device"},
    {NULL}
 };
 
