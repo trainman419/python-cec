@@ -48,7 +48,7 @@ import cec
 
 cec.init()
 
-tv = cec.Device(0)
+tv = cec.Device(cec.CECDEVICE_TV)
 tv.power_on()
 ```
 
@@ -94,12 +94,14 @@ class Device:
    osd_string
    cec_version
    language
-   is_active() # not implemented yet
+   is_active()
    set_av_input(input)
    set_audio_input(input)
+   transmit(opcode, parameters)
 
-cec.is_active_source() # not implemented yet
-cec.set_active_source()  # not implemented yet
+cec.is_active_source(addr)
+cec.set_active_source() # use default device type
+cec.set_active_source(device_type) # use a specific device type
 cec.set_inactive_source()  # not implemented yet
 
 cec.volume_up()
@@ -111,6 +113,12 @@ cec.set_physical_address(addr)
 cec.can_persist_config()
 cec.persist_config()
 cec.set_port(device, port)
+
+# set arbitrary active source (in this case 2.0.0.0)
+destination = cec.CECDEVICE_BROADCAST
+opcode = cec.CEC_OPCODE_ACTIVE_SOURCE
+parameters = bytes([0x20, 0x00])
+cec.transmit(destination, opcode, parameters)
 ```
 
 ## Changelog
