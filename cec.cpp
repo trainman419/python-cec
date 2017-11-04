@@ -502,7 +502,6 @@ static PyObject * set_stream_path(PyObject * self, PyObject * args) {
             Py_DECREF(arg);
             return NULL;
          }
-#endif
       } else if(PyUnicode_Check(arg)) {
          // Convert from Unicode to ASCII
          PyObject* ascii_arg = PyUnicode_AsASCIIString(arg);
