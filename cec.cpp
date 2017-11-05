@@ -677,6 +677,22 @@ int keypress_cb(void * self, const cec_keypress key) {
 #endif
 }
 
+static PyObject * convert_cmd(const cec_command* cmd) {
+#if PY_MAJOR_VERSION >= 3
+   return Py_BuildValue("{sBsBsOsOsBsy#sOsi}",
+#else
+   return Py_BuildValue("{sBsBsOsOsBss#sOsi}",
+#endif
+         "initiator", cmd->initiator,
+         "destination", cmd->destination,
+         "ack", cmd->ack ? Py_True : Py_False,
+         "eom", cmd->eom ? Py_True : Py_False,
+         "opcode", cmd->opcode,
+         "parameters", cmd->parameters.data, cmd->parameters.size,
+         "opcode_set", cmd->opcode_set ? Py_True : Py_False,
+         "transmit_timeout", cmd->transmit_timeout);
+}
+
 #if CEC_LIB_VERSION_MAJOR >= 4
 void command_cb(void * self, const cec_command* command) {
 #else
@@ -685,11 +701,13 @@ int command_cb(void * self, const cec_command command) {
    debug("got command callback\n");
    PyGILState_STATE gstate;
    gstate = PyGILState_Ensure();
-   // TODO: figure out how to pass these parameters
-   //  we'll probably have to build an Object for this
-   PyObject * args = Py_BuildValue("(i)", EVENT_COMMAND);
-   // don't bother triggering an event until we can actually pass arguments
-   //trigger_event(EVENT_COMMAND, args);
+#if CEC_LIB_VERSION_MAJOR >= 4
+   const cec_command * cmd = command;
+#else
+   const cec_command * cmd = &command;
+#endif
+   PyObject * args = Py_BuildValue("(iO&)", EVENT_COMMAND, convert_cmd, cmd);
+   trigger_event(EVENT_COMMAND, args);
    Py_DECREF(args);
    PyGILState_Release(gstate);
 #if CEC_LIB_VERSION_MAJOR >= 4
