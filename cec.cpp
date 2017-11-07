@@ -350,6 +350,30 @@ static PyObject * remove_callback(PyObject * self, PyObject * args) {
   return NULL;
 }
 
+static PyObject * make_bound_method_args(PyObject * self, PyObject * args) {
+   Py_ssize_t count = 0;
+   if( PyTuple_Check(args) ) {
+      count = PyTuple_Size(args);
+   }
+   PyObject * result = PyTuple_New(count+1);
+   if( result == NULL ) {
+      return NULL;
+   }
+   assert(self != NULL);
+   Py_INCREF(self);
+   PyTuple_SetItem(result, 0, self);
+   for( int i=0; i<count; i++ ) {
+      PyObject * arg = PyTuple_GetItem(args, i);
+      if( arg == NULL ) {
+         Py_DECREF(result);
+         return NULL;
+      }
+      Py_INCREF(arg);
+      PyTuple_SetItem(result, i+1, arg);
+   }
+   return result;
+}
+
 static PyObject * trigger_event(long int event, PyObject * args) {
    assert(event & EVENT_ALL);
    Py_INCREF(Py_None);
@@ -364,8 +388,21 @@ static PyObject * trigger_event(long int event, PyObject * args) {
       //debug("Checking callback %d with events %ld\n", i, itr->event);
       if( itr->event & event ) {
          //debug("Calling callback %d\n", i);
+         PyObject * callback = itr->cb;
+         PyObject * arguments = args;
+         if( PyMethod_Check(itr->cb) ) {
+            callback = PyMethod_Function(itr->cb);
+            PyObject * self = PyMethod_Self(itr->cb);
+            if( self ) {
+               // bound method, prepend self/cls to argument tuple
+               arguments = make_bound_method_args(self, args);
+            }
+         }
          // see also: PyObject_CallFunction(...) which can take C args
-         PyObject * temp = PyObject_CallObject(itr->cb, args);
+         PyObject * temp = PyObject_CallObject(callback, arguments);
+         if( arguments != args ) {
+            Py_XDECREF(arguments);
+         }
          if( temp ) {
             debug("Callback succeeded\n");
             Py_DECREF(temp);
