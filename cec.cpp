@@ -286,16 +286,12 @@ static PyObject * list_devices(PyObject * self, PyObject * args) {
    return result;
 }
 
-class Callback {
+struct Callback {
    public:
       long int event;
       PyObject * cb;
 
       Callback(long int e, PyObject * c) : event(e), cb(c) {
-         Py_INCREF(cb);
-      }
-      ~Callback() {
-         Py_DECREF(cb);
       }
 };
 
@@ -319,6 +315,7 @@ static PyObject * add_callback(PyObject * self, PyObject * args) {
          return NULL;
       }
 
+      Py_INCREF(callback);
       Callback new_cb(events, callback);
 
       debug("Adding callback for event %ld\n", events);
@@ -344,6 +341,7 @@ static PyObject * remove_callback(PyObject * self, PyObject * args) {
            if( itr->event == 0 ) {
               // if this callback has no events, remove it
               itr = callbacks.erase(itr);
+              Py_DECREF(callback);
            }
         }
      }
