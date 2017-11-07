@@ -639,8 +639,10 @@ int log_cb(void * self, const cec_log_message message) {
          level,
          time,
          msg);
-   trigger_event(EVENT_LOG, args);
-   Py_DECREF(args);
+   if( args ) {
+      trigger_event(EVENT_LOG, args);
+      Py_DECREF(args);
+   }
    PyGILState_Release(gstate);
 #if CEC_LIB_VERSION_MAJOR >= 4
    return;
@@ -667,8 +669,10 @@ int keypress_cb(void * self, const cec_keypress key) {
    PyObject * args = Py_BuildValue("(iBI)", EVENT_KEYPRESS,
          keycode,
          duration);
-   trigger_event(EVENT_KEYPRESS, args);
-   Py_DECREF(args);
+   if( args ) {
+      trigger_event(EVENT_KEYPRESS, args);
+      Py_DECREF(args);
+   }
    PyGILState_Release(gstate);
 #if CEC_LIB_VERSION_MAJOR >= 4
    return;
@@ -707,8 +711,10 @@ int command_cb(void * self, const cec_command command) {
    const cec_command * cmd = &command;
 #endif
    PyObject * args = Py_BuildValue("(iO&)", EVENT_COMMAND, convert_cmd, cmd);
-   trigger_event(EVENT_COMMAND, args);
-   Py_DECREF(args);
+   if( args ) {
+      trigger_event(EVENT_COMMAND, args);
+      Py_DECREF(args);
+   }
    PyGILState_Release(gstate);
 #if CEC_LIB_VERSION_MAJOR >= 4
    return;
@@ -732,9 +738,11 @@ int config_cb(void * self, const libcec_configuration) {
    //  this will probably be _lots_ of work and should probably wait until
    //  a later release, or when it becomes necessary.
    PyObject * args = Py_BuildValue("(i)", EVENT_CONFIG_CHANGE);
-   // don't bother triggering an event until we can actually pass arguments
-   //trigger_event(EVENT_CONFIG_CHANGE, args);
-   Py_DECREF(args);
+   if( args ) {
+      // don't bother triggering an event until we can actually pass arguments
+      //trigger_event(EVENT_CONFIG_CHANGE, args);
+      Py_DECREF(args);
+   }
    PyGILState_Release(gstate);
 #if CEC_LIB_VERSION_MAJOR >= 4
    return;
@@ -758,8 +766,10 @@ int alert_cb(void * self, const libcec_alert alert, const libcec_parameter p) {
       Py_INCREF(param);
    }
    PyObject * args = Py_BuildValue("(iiN)", EVENT_ALERT, alert, param);
-   trigger_event(EVENT_ALERT, args);
-   Py_DECREF(args);
+   if( args ) {
+      trigger_event(EVENT_ALERT, args);
+      Py_DECREF(args);
+   }
    PyGILState_Release(gstate);
 #if CEC_LIB_VERSION_MAJOR >= 4
    return;
@@ -773,8 +783,10 @@ int menu_cb(void * self, const cec_menu_state menu) {
    PyGILState_STATE gstate;
    gstate = PyGILState_Ensure();
    PyObject * args = Py_BuildValue("(ii)", EVENT_MENU_CHANGED, menu);
-   trigger_event(EVENT_MENU_CHANGED, args);
-   Py_DECREF(args);
+   if( args ) {
+      trigger_event(EVENT_MENU_CHANGED, args);
+      Py_DECREF(args);
+   }
    PyGILState_Release(gstate);
    return 1;
 }
@@ -787,8 +799,10 @@ void activated_cb(void * self, const cec_logical_address logical_address,
    PyObject * active = (state == 1) ? Py_True : Py_False;
    PyObject * args = Py_BuildValue("(iOi)", EVENT_ACTIVATED, active,
       logical_address);
-   trigger_event(EVENT_ACTIVATED, args);
-   Py_DECREF(args);
+   if( args ) {
+      trigger_event(EVENT_ACTIVATED, args);
+      Py_DECREF(args);
+   }
    PyGILState_Release(gstate);
    return;
 }
