@@ -670,14 +670,17 @@ int log_cb(void * self, const cec_log_message message) {
    long int time = message.time;
    const char* msg = message.message;
 #endif
-   PyObject * args = Py_BuildValue("(iils)", EVENT_LOG, 
+   // decode message ignoring invalid characters
+   PyObject * umsg = PyUnicode_DecodeASCII(msg, strlen(msg), "ignore");
+   PyObject * args = Py_BuildValue("(iilO)", EVENT_LOG,
          level,
          time,
-         msg);
+         umsg);
    if( args ) {
       trigger_event(EVENT_LOG, args);
       Py_DECREF(args);
    }
+   Py_XDECREF(umsg);
    PyGILState_Release(gstate);
 #if CEC_LIB_VERSION_MAJOR >= 4
    return;
