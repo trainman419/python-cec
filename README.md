@@ -69,7 +69,7 @@ cec.add_callback(handler, events)
 # the list of events is specified as a bitmask of the possible events:
 cec.EVENT_LOG
 cec.EVENT_KEYPRESS
-cec.EVENT_COMMAND # not implemented yet
+cec.EVENT_COMMAND
 cec.EVENT_CONFIG_CHANGE # not implemented yet
 cec.EVENT_ALERT
 cec.EVENT_MENU_CHANGED

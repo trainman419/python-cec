@@ -286,16 +286,12 @@ static PyObject * list_devices(PyObject * self, PyObject * args) {
    return result;
 }
 
-class Callback {
+struct Callback {
    public:
       long int event;
       PyObject * cb;
 
       Callback(long int e, PyObject * c) : event(e), cb(c) {
-         Py_INCREF(cb);
-      }
-      ~Callback() {
-         Py_DECREF(cb);
       }
 };
 
@@ -319,6 +315,7 @@ static PyObject * add_callback(PyObject * self, PyObject * args) {
          return NULL;
       }
 
+      Py_INCREF(callback);
       Callback new_cb(events, callback);
 
       debug("Adding callback for event %ld\n", events);
@@ -344,12 +341,37 @@ static PyObject * remove_callback(PyObject * self, PyObject * args) {
            if( itr->event == 0 ) {
               // if this callback has no events, remove it
               itr = callbacks.erase(itr);
+              Py_DECREF(callback);
            }
         }
      }
      
   }
   return NULL;
+}
+
+static PyObject * make_bound_method_args(PyObject * self, PyObject * args) {
+   Py_ssize_t count = 0;
+   if( PyTuple_Check(args) ) {
+      count = PyTuple_Size(args);
+   }
+   PyObject * result = PyTuple_New(count+1);
+   if( result == NULL ) {
+      return NULL;
+   }
+   assert(self != NULL);
+   Py_INCREF(self);
+   PyTuple_SetItem(result, 0, self);
+   for( int i=0; i<count; i++ ) {
+      PyObject * arg = PyTuple_GetItem(args, i);
+      if( arg == NULL ) {
+         Py_DECREF(result);
+         return NULL;
+      }
+      Py_INCREF(arg);
+      PyTuple_SetItem(result, i+1, arg);
+   }
+   return result;
 }
 
 static PyObject * trigger_event(long int event, PyObject * args) {
@@ -366,8 +388,21 @@ static PyObject * trigger_event(long int event, PyObject * args) {
       //debug("Checking callback %d with events %ld\n", i, itr->event);
       if( itr->event & event ) {
          //debug("Calling callback %d\n", i);
+         PyObject * callback = itr->cb;
+         PyObject * arguments = args;
+         if( PyMethod_Check(itr->cb) ) {
+            callback = PyMethod_Function(itr->cb);
+            PyObject * self = PyMethod_Self(itr->cb);
+            if( self ) {
+               // bound method, prepend self/cls to argument tuple
+               arguments = make_bound_method_args(self, args);
+            }
+         }
          // see also: PyObject_CallFunction(...) which can take C args
-         PyObject * temp = PyObject_CallObject(itr->cb, args);
+         PyObject * temp = PyObject_CallObject(callback, arguments);
+         if( arguments != args ) {
+            Py_XDECREF(arguments);
+         }
          if( temp ) {
             debug("Callback succeeded\n");
             Py_DECREF(temp);
@@ -635,12 +670,17 @@ int log_cb(void * self, const cec_log_message message) {
    long int time = message.time;
    const char* msg = message.message;
 #endif
-   PyObject * args = Py_BuildValue("(iils)", EVENT_LOG, 
+   // decode message ignoring invalid characters
+   PyObject * umsg = PyUnicode_DecodeASCII(msg, strlen(msg), "ignore");
+   PyObject * args = Py_BuildValue("(iilO)", EVENT_LOG,
          level,
          time,
-         msg);
-   trigger_event(EVENT_LOG, args);
-   Py_DECREF(args);
+         umsg);
+   if( args ) {
+      trigger_event(EVENT_LOG, args);
+      Py_DECREF(args);
+   }
+   Py_XDECREF(umsg);
    PyGILState_Release(gstate);
 #if CEC_LIB_VERSION_MAJOR >= 4
    return;
@@ -667,8 +707,10 @@ int keypress_cb(void * self, const cec_keypress key) {
    PyObject * args = Py_BuildValue("(iBI)", EVENT_KEYPRESS,
          keycode,
          duration);
-   trigger_event(EVENT_KEYPRESS, args);
-   Py_DECREF(args);
+   if( args ) {
+      trigger_event(EVENT_KEYPRESS, args);
+      Py_DECREF(args);
+   }
    PyGILState_Release(gstate);
 #if CEC_LIB_VERSION_MAJOR >= 4
    return;
@@ -707,8 +749,10 @@ int command_cb(void * self, const cec_command command) {
    const cec_command * cmd = &command;
 #endif
    PyObject * args = Py_BuildValue("(iO&)", EVENT_COMMAND, convert_cmd, cmd);
-   trigger_event(EVENT_COMMAND, args);
-   Py_DECREF(args);
+   if( args ) {
+      trigger_event(EVENT_COMMAND, args);
+      Py_DECREF(args);
+   }
    PyGILState_Release(gstate);
 #if CEC_LIB_VERSION_MAJOR >= 4
    return;
@@ -732,9 +776,11 @@ int config_cb(void * self, const libcec_configuration) {
    //  this will probably be _lots_ of work and should probably wait until
    //  a later release, or when it becomes necessary.
    PyObject * args = Py_BuildValue("(i)", EVENT_CONFIG_CHANGE);
-   // don't bother triggering an event until we can actually pass arguments
-   //trigger_event(EVENT_CONFIG_CHANGE, args);
-   Py_DECREF(args);
+   if( args ) {
+      // don't bother triggering an event until we can actually pass arguments
+      //trigger_event(EVENT_CONFIG_CHANGE, args);
+      Py_DECREF(args);
+   }
    PyGILState_Release(gstate);
 #if CEC_LIB_VERSION_MAJOR >= 4
    return;
@@ -758,8 +804,10 @@ int alert_cb(void * self, const libcec_alert alert, const libcec_parameter p) {
       Py_INCREF(param);
    }
    PyObject * args = Py_BuildValue("(iiN)", EVENT_ALERT, alert, param);
-   trigger_event(EVENT_ALERT, args);
-   Py_DECREF(args);
+   if( args ) {
+      trigger_event(EVENT_ALERT, args);
+      Py_DECREF(args);
+   }
    PyGILState_Release(gstate);
 #if CEC_LIB_VERSION_MAJOR >= 4
    return;
@@ -773,8 +821,10 @@ int menu_cb(void * self, const cec_menu_state menu) {
    PyGILState_STATE gstate;
    gstate = PyGILState_Ensure();
    PyObject * args = Py_BuildValue("(ii)", EVENT_MENU_CHANGED, menu);
-   trigger_event(EVENT_MENU_CHANGED, args);
-   Py_DECREF(args);
+   if( args ) {
+      trigger_event(EVENT_MENU_CHANGED, args);
+      Py_DECREF(args);
+   }
    PyGILState_Release(gstate);
    return 1;
 }
@@ -787,8 +837,10 @@ void activated_cb(void * self, const cec_logical_address logical_address,
    PyObject * active = (state == 1) ? Py_True : Py_False;
    PyObject * args = Py_BuildValue("(iOi)", EVENT_ACTIVATED, active,
       logical_address);
-   trigger_event(EVENT_ACTIVATED, args);
-   Py_DECREF(args);
+   if( args ) {
+      trigger_event(EVENT_ACTIVATED, args);
+      Py_DECREF(args);
+   }
    PyGILState_Release(gstate);
    return;
 }
