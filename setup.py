@@ -9,9 +9,6 @@ if "CFLAGS" in cfg_vars:
     cfg_vars["CFLAGS"] = cfg_vars["CFLAGS"].replace("-Wstrict-prototypes", "")
 if "OPT" in cfg_vars:
     cfg_vars["OPT"] = cfg_vars["OPT"].replace("-Wstrict-prototypes", "")
-# Do not append SOABI to extension filename
-if "EXT_SUFFIX" in cfg_vars:
-    cfg_vars["EXT_SUFFIX"] = ".so"
 
 python_cec = Extension('cec', sources = [ 'cec.cpp', 'device.cpp' ], 
                         include_dirs=['include'],
