@@ -194,6 +194,13 @@ static PyObject * Device_transmit(Device * self, PyObject * args) {
    int param_count = 0;
    if( PyArg_ParseTuple(args, "b|s#:transmit", &opcode,
          &params, &param_count) ) {
+      if( param_count > CEC_MAX_DATA_PACKET_SIZE ) {
+         char errstr[1024];
+         snprintf(errstr, 1024, "Too many parameters, maximum is %d",
+            CEC_MAX_DATA_PACKET_SIZE);
+         PyErr_SetString(PyExc_ValueError, errstr);
+         return NULL;
+      }
       cec_command data;
       bool success;
       Py_BEGIN_ALLOW_THREADS

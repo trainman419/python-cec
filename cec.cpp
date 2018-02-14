@@ -431,6 +431,13 @@ static PyObject * transmit(PyObject * self, PyObject * args) {
          PyErr_SetString(PyExc_ValueError, "Logical address must be between 0 and 15");
          return NULL;
       }
+      if( param_count > CEC_MAX_DATA_PACKET_SIZE ) {
+         char errstr[1024];
+         snprintf(errstr, 1024, "Too many parameters, maximum is %d",
+            CEC_MAX_DATA_PACKET_SIZE);
+         PyErr_SetString(PyExc_ValueError, errstr);
+         return NULL;
+      }
       cec_command data;
       bool success;
       Py_BEGIN_ALLOW_THREADS
