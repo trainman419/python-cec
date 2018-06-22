@@ -39,3 +39,10 @@ struct Device {
 };
 
 PyTypeObject * DeviceTypeInit(CEC::ICECAdapter * adapter);
+
+/*
+ * Compat for libcec 3.x
+ */
+#if CEC_LIB_VERSION_MAJOR < 4
+  #define CEC_MAX_DATA_PACKET_SIZE (16 * 4)
+#endif
