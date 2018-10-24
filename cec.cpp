@@ -103,7 +103,7 @@ using namespace CEC;
 #define HAVE_CEC_ADAPTER_DESCRIPTOR 0
 #endif
 
-int parse_physical_addr(char * addr) {
+int parse_physical_addr(const char * addr) {
    int a, b, c, d;
    if( sscanf(addr, "%x.%x.%x.%x", &a, &b, &c, &d) == 4 ) {
       if( a > 0xF || b > 0xF || c > 0xF || d > 0xF ) return -1;
@@ -527,7 +527,7 @@ static PyObject * set_stream_path(PyObject * self, PyObject * args) {
          }
 #if PY_MAJOR_VERSION >= 3
       } else if(PyUnicode_Check(arg)) {
-         char * arg_s = PyUnicode_AsUTF8(arg);
+         const char * arg_s = PyUnicode_AsUTF8(arg);
 #else
       } else if(PyString_Check(arg)) {
          char * arg_s = PyString_AsString(arg);
