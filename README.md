@@ -123,6 +123,13 @@ cec.transmit(destination, opcode, parameters)
 
 ## Changelog
 
+### 0.2.7 ( 2018-11-09 )
+* Implement cec.EVENT_COMMAND callback
+* Fix several crashes/memory leaks related to callbacks
+* Add possibility to use a method as a callback
+* Limit maximum number of parameters passed to transmit()
+* Fix compilation error with GCC >= 8
+
 ### 0.2.6 ( 2017-11-03 )
 * Python 3 support ( @nforro )
 * Implement is_active_source, set_active_source, transmit ( @nforro )
