@@ -39,6 +39,16 @@ sudo apt-get install python-dev build-essential libcec-dev cec-utils
 pip install cec
 ```
 
+### Installing on Windows
+
+You need to [build libcec](https://github.com/Pulse-Eight/libcec/blob/master/docs/README.windows.md) from source, because libcec installer doesn't provide *cec.lib* that is necessary for linking.
+
+Then you just need to set up your paths, e.g.:
+```
+set INCLUDE=path_to_libcec\build\amd64\include
+set LIB=path_to_libcec\build\amd64
+```
+
 ## Getting Started
 
 A simple example to turn your TV on:
