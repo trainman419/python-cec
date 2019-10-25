@@ -127,7 +127,7 @@ cec.set_port(device, port)
 # set arbitrary active source (in this case 2.0.0.0)
 destination = cec.CECDEVICE_BROADCAST
 opcode = cec.CEC_OPCODE_ACTIVE_SOURCE
-parameters = bytes([0x20, 0x00])
+parameters = b'\x20\x00'
 cec.transmit(destination, opcode, parameters)
 ```
 
