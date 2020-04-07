@@ -17,20 +17,9 @@ On OS X:
 brew install libcec
 ```
 
-Ubuntu:
+Ubuntu, Debian and Raspbian:
 ```
 sudo apt-get install libcec-dev build-essential python-dev
-```
-Note: because Ubuntu ships an older version of libcec that lacks the ToggleMute function, that function will also be missing in python-cec
-
-Rasbian:
-
-I've done a custom build of a more recent libcec with Raspberry Pi support.
-```
-wget http://packages.namniart.com/repos/namniart.key -O - | sudo apt-key add -
-sudo sh -c 'echo "deb http://packages.namniart.com/repos/pi wheezy main" > /etc/apt/sources.list.d/libcec.list'
-sudo apt-get update
-sudo apt-get install python-dev build-essential libcec-dev cec-utils
 ```
 
 ### Install from PIP
