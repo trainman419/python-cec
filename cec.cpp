@@ -421,16 +421,25 @@ static PyObject * trigger_event(long int event, PyObject * args) {
 }
 
 static PyObject * transmit(PyObject * self, PyObject * args) {
+   unsigned char initiator;
    unsigned char destination;
    unsigned char opcode;
    const char * params = NULL;
    int param_count = 0;
 
-   if( PyArg_ParseTuple(args, "bb|s#:transmit", &destination, &opcode,
-         &params, &param_count) ) {
+   if( PyArg_ParseTuple(args, "bb|s#b:transmit", &destination, &opcode,
+         &params, &param_count, &initiator) ) {
       if( destination < 0 || destination > 15 ) {
          PyErr_SetString(PyExc_ValueError, "Logical address must be between 0 and 15");
          return NULL;
+      }
+      if( initiator ) {
+         if( initiator < 0 || initiator > 15 ) {
+            PyErr_SetString(PyExc_ValueError, "Logical address must be between 0 and 15");
+            return NULL;
+         }
+      } else {
+         initiator = CEC_adapter->GetLogicalAddresses().primary;
       }
       if( param_count > CEC_MAX_DATA_PACKET_SIZE ) {
          char errstr[1024];
@@ -442,7 +451,7 @@ static PyObject * transmit(PyObject * self, PyObject * args) {
       cec_command data;
       bool success;
       Py_BEGIN_ALLOW_THREADS
-      data.initiator = CEC_adapter->GetLogicalAddresses().primary;
+      data.initiator = (cec_logical_address)initiator;
       data.destination = (cec_logical_address)destination;
       data.opcode = (cec_opcode)opcode;
       data.opcode_set = 1;
