@@ -421,7 +421,7 @@ static PyObject * trigger_event(long int event, PyObject * args) {
 }
 
 static PyObject * transmit(PyObject * self, PyObject * args) {
-   unsigned char initiator;
+   unsigned char initiator = 'g';
    unsigned char destination;
    unsigned char opcode;
    const char * params = NULL;
@@ -433,7 +433,7 @@ static PyObject * transmit(PyObject * self, PyObject * args) {
          PyErr_SetString(PyExc_ValueError, "Logical address must be between 0 and 15");
          return NULL;
       }
-      if( initiator ) {
+      if( initiator != 'g' ) {
          if( initiator < 0 || initiator > 15 ) {
             PyErr_SetString(PyExc_ValueError, "Logical address must be between 0 and 15");
             return NULL;
