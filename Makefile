@@ -21,6 +21,9 @@ $(EXTENSION): $(BUILD_DIR)/$(EXTENSION)
 $(BUILD_DIR)/$(EXTENSION): cec.cpp setup.py device.h device.cpp
 	$(PYTHON) setup.py build
 
+dist: all
+	$(PYTHON) setup.py bdist_wheel
+
 test: all
 	./test.py
 .PHONY: test
@@ -28,4 +31,7 @@ test: all
 clean:
 	rm -rf build
 	rm -f $(EXTENSION)
+	rm -rf dist
+	rm -rf cec.egg-info
+	rm -f cec.*.so
 .PHONY: clean
