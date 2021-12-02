@@ -987,6 +987,9 @@ PyMODINIT_FUNC initcec(void) {
    PyModule_AddIntMacro(m, EVENT_ACTIVATED);
    PyModule_AddIntMacro(m, EVENT_ALL);
 
+   // constants for parameters
+   PyModule_AddIntMacro(m, CEC_MAX_DATA_PACKET_SIZE);
+
    // constants for alert types
    PyModule_AddIntConstant(m, "CEC_ALERT_SERVICE_DEVICE",
          CEC_ALERT_SERVICE_DEVICE);
