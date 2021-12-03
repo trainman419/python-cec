@@ -420,15 +420,20 @@ static PyObject * trigger_event(long int event, PyObject * args) {
    return result;
 }
 
-static PyObject * transmit(PyObject * self, PyObject * args) {
+static PyObject * transmit(PyObject * self, PyObject * args, PyObject * kw) {
    unsigned char initiator = 'g';
    unsigned char destination;
    unsigned char opcode;
    const char * params = NULL;
+   static char kw_destination[] = "destination";
+   static char kw_opcode[] = "opcode";
+   static char kw_parameters[] = "parameters";
+   static char kw_initiator[] = "initiator";
+   static char * keywords[5] = {kw_destination, kw_opcode, kw_parameters, kw_initiator, NULL};
    int param_count = 0;
 
-   if( PyArg_ParseTuple(args, "bb|s#b:transmit", &destination, &opcode,
-         &params, &param_count, &initiator) ) {
+   if( PyArg_ParseTupleAndKeywords(args, kw, "bb|s#b:transmit", keywords, &destination,
+         &opcode, &params, &param_count, &initiator) ) {
       if( destination < 0 || destination > 15 ) {
          PyErr_SetString(PyExc_ValueError, "Logical address must be between 0 and 15");
          return NULL;
@@ -661,7 +666,7 @@ static PyMethodDef CecMethods[] = {
    {"list_devices", list_devices, METH_VARARGS, "List devices"},
    {"add_callback", add_callback, METH_VARARGS, "Add a callback"},
    {"remove_callback", remove_callback, METH_VARARGS, "Remove a callback"},
-   {"transmit", transmit, METH_VARARGS, "Transmit a raw CEC command"},
+   {"transmit", (PyCFunction) transmit, METH_VARARGS | METH_KEYWORDS, "Transmit a raw CEC command"},
    {"is_active_source", is_active_source, METH_VARARGS, "Check active source"},
    {"set_active_source", set_active_source, METH_VARARGS, "Set active source"},
    {"volume_up",   volume_up,   METH_VARARGS, "Volume Up"},
