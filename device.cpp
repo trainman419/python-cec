@@ -191,7 +191,7 @@ static PyObject * Device_audio_input(Device * self, PyObject * args) {
 static PyObject * Device_transmit(Device * self, PyObject * args) {
    unsigned char opcode;
    const char * params = NULL;
-   int param_count = 0;
+   Py_ssize_t param_count = 0;
    if( PyArg_ParseTuple(args, "b|s#:transmit", &opcode,
          &params, &param_count) ) {
       if( param_count > CEC_MAX_DATA_PACKET_SIZE ) {
@@ -209,7 +209,7 @@ static PyObject * Device_transmit(Device * self, PyObject * args) {
       data.opcode = (cec_opcode)opcode;
       data.opcode_set = 1;
       if( params ) {
-         for( int i=0; i<param_count; i++ ) {
+         for( Py_ssize_t i=0; i<param_count; i++ ) {
             data.PushBack(((uint8_t *)params)[i]);
          }
       }

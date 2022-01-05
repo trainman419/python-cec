@@ -26,6 +26,7 @@
 // request the std format macros
 #define __STDC_FORMAT_MACROS
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <stdlib.h>
 #include <inttypes.h>
@@ -330,7 +331,7 @@ static PyObject * add_callback(PyObject * self, PyObject * args) {
 
 static PyObject * remove_callback(PyObject * self, PyObject * args) {
   PyObject * callback;
-  long int events = EVENT_ALL; // default to all events
+  Py_ssize_t events = EVENT_ALL; // default to all events
 
   if( PyArg_ParseTuple(args, "O|i:remove_callback", &callback, &events) ) {
      for( cb_list::iterator itr = callbacks.begin(); 
@@ -364,7 +365,7 @@ static PyObject * make_bound_method_args(PyObject * self, PyObject * args) {
    assert(self != NULL);
    Py_INCREF(self);
    PyTuple_SetItem(result, 0, self);
-   for( int i=0; i<count; i++ ) {
+   for( Py_ssize_t i=0; i<count; i++ ) {
       PyObject * arg = PyTuple_GetItem(args, i);
       if( arg == NULL ) {
          Py_DECREF(result);
@@ -425,7 +426,7 @@ static PyObject * transmit(PyObject * self, PyObject * args) {
    unsigned char destination;
    unsigned char opcode;
    const char * params = NULL;
-   int param_count = 0;
+   Py_ssize_t param_count = 0;
 
    if( PyArg_ParseTuple(args, "bb|s#b:transmit", &destination, &opcode,
          &params, &param_count, &initiator) ) {
@@ -456,7 +457,7 @@ static PyObject * transmit(PyObject * self, PyObject * args) {
       data.opcode = (cec_opcode)opcode;
       data.opcode_set = 1;
       if( params ) {
-         for( int i=0; i<param_count; i++ ) {
+         for( Py_ssize_t i=0; i<param_count; i++ ) {
             data.PushBack(((uint8_t *)params)[i]);
          }
       }
