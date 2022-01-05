@@ -122,6 +122,12 @@ cec.transmit(destination, opcode, parameters)
 
 ## Changelog
 
+### 0.2.8 ( 2022-01-05 )
+* Add support for libCEC >= 5
+* Windows support
+* Support for setting CEC initiator
+* Python 3.10 compatibility
+
 ### 0.2.7 ( 2018-11-09 )
 * Implement cec.EVENT_COMMAND callback
 * Fix several crashes/memory leaks related to callbacks

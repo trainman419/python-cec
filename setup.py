@@ -14,7 +14,7 @@ python_cec = Extension('cec', sources = [ 'cec.cpp', 'device.cpp' ],
                         include_dirs=['include'],
                         libraries = [ 'cec' ])
 
-setup(name='cec', version='0.2.7',
+setup(name='cec', version='0.2.8',
       description="Python bindings for libcec",
       license='GPLv2',
       data_files=['COPYING'],
