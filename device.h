@@ -22,6 +22,7 @@
  * Author: Austin Hendrix <namniart@gmail.com>
  */
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 #include <libcec/cec.h>
