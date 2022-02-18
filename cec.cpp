@@ -245,8 +245,10 @@ static PyObject * init(PyObject * self, PyObject * args) {
          Py_INCREF(Py_None);
          result = Py_None;
       } else {
+         Py_BEGIN_ALLOW_THREADS
          CECDestroy(CEC_adapter);
          CEC_adapter = NULL;
+         Py_END_ALLOW_THREADS
 
          char errstr[1024];
          snprintf(errstr, 1024, "CEC failed to open %s", dev);
