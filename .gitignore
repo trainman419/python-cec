@@ -1,0 +1,13 @@
+
+.idea/deployment.xml
+.idea/encodings.xml
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/inspectionProfiles/Project_Default.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/python-cec.iml
+.idea/vcs.xml
+cec.egg-info/dependency_links.txt
+cec.egg-info/PKG-INFO
+cec.egg-info/SOURCES.txt
+cec.egg-info/top_level.txt
