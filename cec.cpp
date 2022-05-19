@@ -903,6 +903,28 @@ PyMODINIT_FUNC PyInit_cec(void) {
 #else
 PyMODINIT_FUNC initcec(void) {
 #endif
+   debug("Checking for CEC_OSD_NAME environment variable...\n");
+   const char* env_p = std::getenv("CEC_OSD_NAME");
+   const char* str_device_name = "python-cec";
+   if ( env_p == NULL ) {
+      debug("CEC_OSD_NAME is not set. Will set device name to %s\n", str_device_name);
+   } else {
+      if ( strlen(env_p) == 0 ) {
+         char errstr[1024];
+         snprintf(errstr, 1024, "Length of CEC_OSD_NAME environment variable is zero");
+         PyErr_SetString(PyExc_Exception, errstr);
+         INITERROR;
+      }
+      if ( strlen(env_p) > 12 ) {
+         char errstr[1024];
+         snprintf(errstr, 1024, "Length of CEC_OSD_NAME environment variable exceeds maximum length of 12 characters");
+         PyErr_SetString(PyExc_Exception, errstr);
+         INITERROR;
+      }
+      debug("Found CEC_OSD_NAME = %s\n",env_p);
+      str_device_name = env_p;
+   }
+
    // Make sure threads are enabled in the python interpreter
    // this also acquires the global interpreter lock
    PyEval_InitThreads();
@@ -912,7 +934,7 @@ PyMODINIT_FUNC initcec(void) {
    CEC_config = new libcec_configuration();
    CEC_config->Clear();
 
-   snprintf(CEC_config->strDeviceName, 13, "python-cec");
+   snprintf(CEC_config->strDeviceName, 13, "%s", str_device_name);
    // CEC_CLIENT_VERSION_CURRENT was introduced in 2.0.4
    // just use 2.1.0 because the conditional is simpler
 #if CEC_LIB_VERSION_MAJOR >= 3
