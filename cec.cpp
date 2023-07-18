@@ -271,7 +271,8 @@ static PyObject * close(PyObject * self, PyObject * args) {
       Py_END_ALLOW_THREADS
    }
 
-   return NULL;
+   Py_INCREF(Py_None)
+   return Py_None;
 }
 
 static PyObject * list_devices(PyObject * self, PyObject * args) {
