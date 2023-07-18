@@ -676,6 +676,7 @@ PyObject * persist_config(PyObject * self, PyObject * args) {
 static PyMethodDef CecMethods[] = {
    {"list_adapters", list_adapters, METH_VARARGS, "List available adapters"},
    {"init", init, METH_VARARGS, "Open an adapter"},
+   {"close", close, METH_VARARGS, "Close an adapter"},
    {"list_devices", list_devices, METH_VARARGS, "List devices"},
    {"add_callback", add_callback, METH_VARARGS, "Add a callback"},
    {"remove_callback", remove_callback, METH_VARARGS, "Remove a callback"},
