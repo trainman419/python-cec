@@ -217,6 +217,13 @@ static PyObject * list_adapters(PyObject * self, PyObject * args) {
    return result;
 }
 
+static void destoryAdapter() {
+   Py_BEGIN_ALLOW_THREADS
+   CECDestroy(CEC_adapter);
+   CEC_adapter = NULL;
+   Py_END_ALLOW_THREADS
+}
+
 static PyObject * init(PyObject * self, PyObject * args) {
    PyObject * result = NULL;
    const char * dev = NULL;
@@ -245,11 +252,7 @@ static PyObject * init(PyObject * self, PyObject * args) {
          Py_INCREF(Py_None);
          result = Py_None;
       } else {
-         Py_BEGIN_ALLOW_THREADS
-         CECDestroy(CEC_adapter);
-         CEC_adapter = NULL;
-         Py_END_ALLOW_THREADS
-
+         destoryAdapter();
          char errstr[1024];
          snprintf(errstr, 1024, "CEC failed to open %s", dev);
          PyErr_SetString(PyExc_IOError, errstr);
@@ -257,6 +260,18 @@ static PyObject * init(PyObject * self, PyObject * args) {
    }
 
    return result;
+}
+
+static PyObject * close(PyObject * self, PyObject * args) {
+
+   if( PyArg_ParseTuple(args, "") == 0 && CEC_adapter == NULL ) {
+      Py_BEGIN_ALLOW_THREADS
+      CEC_adapter->Close();
+      destoryAdapter();
+      Py_END_ALLOW_THREADS
+   }
+
+   return NULL;
 }
 
 static PyObject * list_devices(PyObject * self, PyObject * args) {
