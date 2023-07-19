@@ -217,11 +217,6 @@ static PyObject * list_adapters(PyObject * self, PyObject * args) {
    return result;
 }
 
-static void destoryAdapter() {
-   CECDestroy(CEC_adapter);
-   CEC_adapter = NULL;
-}
-
 static PyObject * init(PyObject * self, PyObject * args) {
    PyObject * result = NULL;
    const char * dev = NULL;
@@ -251,7 +246,8 @@ static PyObject * init(PyObject * self, PyObject * args) {
          result = Py_None;
       } else {
          Py_BEGIN_ALLOW_THREADS
-         destoryAdapter();
+         CECDestroy(CEC_adapter);
+         CEC_adapter = NULL;
          Py_END_ALLOW_THREADS
          char errstr[1024];
          snprintf(errstr, 1024, "CEC failed to open %s", dev);
@@ -267,7 +263,6 @@ static PyObject * close(PyObject * self, PyObject * args) {
    if( CEC_adapter != NULL ) {
       Py_BEGIN_ALLOW_THREADS
       CEC_adapter->Close();
-      destoryAdapter();
       Py_END_ALLOW_THREADS
    }
 
