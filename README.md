@@ -62,7 +62,7 @@ adapters = cec.list_adapters() # may be called before init()
 cec.init() # use default adapter
 cec.init(adapter) # use a specific adapter
 
-cec.close()  # not implemented yet
+cec.close()  # close the current adapter
 
 cec.add_callback(handler, events)
 # the list of events is specified as a bitmask of the possible events:
