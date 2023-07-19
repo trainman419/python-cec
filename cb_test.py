@@ -37,4 +37,7 @@ cec.volume_up()
 print("Volume Down")
 cec.volume_down()
 
+print("Closing")
+cec.close()
+
 print("SUCCESS!")
