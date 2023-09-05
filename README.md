@@ -120,6 +120,14 @@ parameters = b'\x20\x00'
 cec.transmit(destination, opcode, parameters)
 ```
 
+
+## Environment Variables
+
+CEC_OSD_NAME - by default this library will set the device name to "python-cec". If you set this 
+environment varible (to a string <= 12 characters in length) your device will assigned that name
+when the module initialises itself. This name will appear on your television when you scan for CEC devices.
+
+
 ## Changelog
 
 ### 0.2.8 ( 2022-01-05 )
